@@ -1,0 +1,76 @@
+<form action="/www/developers/editapplication" method="post" accept-charset="utf-8" enctype="multipart/form-data" id="edit_app">
+<input type="hidden" name="authenticityToken" value="FsHarqfjmmGHTTPNAF36NnrPn4EdJz2qMeTbK">
+    <div class="col-lg-11 col-md-10 col-sm-12 edit_service_box">
+        <div id="whyCrossed">
+            <a href="#" onclick="this.parentNode.style.visibility='hidden';return false;" align="right">Cerrar</a>
+        </div>
+        <div id="img_box">
+            <img src="https://s3-eu-west-1.amazonaws.com/tet/FsHarqfjmmGHTTPNAF36NnrPn4EdJz2qMeTbK.png?1601203185408">
+            <span style="display:block;"> <a href="/www/developers/doc_image_req" target="_blank" title="Política y directrices de imágenes">Directrices de imágenes <i class="icon-question-sign"></i> </a></span>
+            <input type="file" name="imageFile" id="imageFile" value="" style="display:block; width:180px; margin-top:10px">
+        </div>
+        <div class="row" style="margin-left:200px;">
+            <div id="app_info" class="app_info col-lg-8">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <label for="name">Nombre</label>
+                        <input type="text" name="name" id="name" value="asdasd">
+                    </div>
+                    <div class="col-lg-5">
+                        <label for="appId">ID de aplicación <a href="#" class="why" onclick="showWhyDialog()"><i class="icon-question-sign"></i> </a></label>
+                        <input type="text" id="appId" value="FsHarqfjmmGHTTPNAF36NnrPn4EdJz2qMeTbK" readonly="readonly" class=""> <input type="hidden" name="appId" value="FsHarqfjmmGHTTPNAF36NnrPn4EdJz2qMeTbK">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6">
+
+                        <label for="secret">Secreto</label>
+                        <input class="renew" type="text" value="FsHarqfjmmGHTTPNAF36NnrPn4EdJz2qMeTbK" readonly="readonly">
+                        <input class="btn_renew" type="hidden" name="secret" id="secret" value="FsHarqfjmmGHTTPNAF36NnrPn4EdJz2qMeTbK">
+                    </div>
+                    <div class="col-lg-5">
+                        <a class="appButton small-button submit btn_renew" data-toggle="modal" href="#renewSecretModal"><i class="icon-refresh iconsize"></i></a>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-4">
+                        <label for="twoFactor">2º factor OTP</label>
+                        <div class="select2-container js-select2" id="s2id_twoFactor"><a href="javascript:void(0)" class="select2-choice" tabindex="-1">   <span class="select2-chosen" id="select2-chosen-1">Deshabilitado</span><abbr class="select2-search-choice-close"></abbr>   <span class="select2-arrow" role="presentation"><b role="presentation"></b></span></a><label for="s2id_autogen1" class="select2-offscreen">2º factor OTP</label><input class="select2-focusser select2-offscreen" type="text" aria-haspopup="true" role="button" aria-labelledby="select2-chosen-1" id="s2id_autogen1"><div class="select2-drop select2-display-none select2-with-searchbox">   <div class="select2-search">       <label for="s2id_autogen1_search" class="select2-offscreen">2º factor OTP</label>       <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="select2-input" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-owns="select2-results-1" id="s2id_autogen1_search" placeholder="">   </div>   <ul class="select2-results" role="listbox" id="select2-results-1">   </ul></div></div><select id="twoFactor" name="twoFactor" class="js-select2" tabindex="-1" title="2º factor OTP" style="display: none;">
+                            <option value="DISABLED" selected="selected">Deshabilitado</option>
+                            <option value="OPT_IN">Opcional</option>
+                            <option value="MANDATORY">Obligatorio</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4">
+                        <label for="lockOnRequest">Bloquear tras consultar</label>
+                        <div class="select2-container js-select2" id="s2id_lockOnRequest"><a href="javascript:void(0)" class="select2-choice" tabindex="-1">   <span class="select2-chosen" id="select2-chosen-2">Deshabilitado</span><abbr class="select2-search-choice-close"></abbr>   <span class="select2-arrow" role="presentation"><b role="presentation"></b></span></a><label for="s2id_autogen2" class="select2-offscreen">Bloquear tras consultar</label><input class="select2-focusser select2-offscreen" type="text" aria-haspopup="true" role="button" aria-labelledby="select2-chosen-2" id="s2id_autogen2"><div class="select2-drop select2-display-none select2-with-searchbox">   <div class="select2-search">       <label for="s2id_autogen2_search" class="select2-offscreen">Bloquear tras consultar</label>       <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="select2-input" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-owns="select2-results-2" id="s2id_autogen2_search" placeholder="">   </div>   <ul class="select2-results" role="listbox" id="select2-results-2">   </ul></div></div><select id="lockOnRequest" name="lockOnRequest" class="js-select2" tabindex="-1" title="Bloquear tras consultar" style="display: none;">
+                            <option value="DISABLED" selected="selected">Deshabilitado</option>
+                            <option value="OPT_IN">Opcional</option>
+                            <option value="MANDATORY">Obligatorio</option>
+                        </select>
+                    </div>
+                <div class="app_info col-lg-4">
+                    <button class="submit" type="submit">
+                        Guardar cambios
+                    </button>
+                </div>
+                </div>
+
+            </div>
+            <div>
+                <div class="app_info col-lg-4">
+                    <label for="contactEmail" title="This information will be available for your users">Correo electrónico de contacto</label>
+                    <input type="text" name="contactEmail" id="contactEmail" value="">
+                </div>
+                <div class="app_info col-lg-4">
+                    <label for="contactPhone" title="This information will be available for your users">Teléfono de contacto</label>
+                    <input type="text" name="contactPhone" id="contactPhone" value="">
+                    <p>Información de contacto del desarrollador para mostrar en las alertas que recibe el usuario final</p>
+                </div>
+                
+            </div>
+        </div>
+    </div></form>

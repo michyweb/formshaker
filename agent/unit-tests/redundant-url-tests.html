@@ -1,0 +1,235 @@
+
+<style>
+.flex-container {
+    display: flex;
+    width:100%
+}
+
+.flex-child {
+    flex: 1;
+    border: 2px solid black;
+    width:50%;
+}  
+
+.flex-child:first-child {
+    margin-right: 20px;
+    width:50%;
+} 
+</style>
+
+<div class="flex-container">
+  URLs tests:<br>
+  <div class="flex-child magenta" id="original">
+
+  </div>
+  URLs after tested:<br>
+  <div class="flex-child green" id="modified">
+
+  </div>
+  
+</div>
+<script>
+matches=[]
+</script>
+<script src="../common/link-utils.js"></script>
+<script src="../iframe-based/link-utils.iframe.js"></script>
+<script src="../common/spider-utils.js"></script>
+<script>
+
+
+
+function printInLeftSidePaneCorrect(msg,id){
+    document.getElementById("original").innerHTML+="<x id='"+id+"-color' style='color:red'>"+msg+"</x><input id='"+id+"' type='checkbox' disabled='true'></input><br>"
+}
+
+function printInLeftSidePaneIncorrect(msg,id){
+    document.getElementById("original").innerHTML+="<x id='"+id+"-color' style='color:red'>"+msg+"</x><input id='"+id+"' type='checkbox' disabled='true'></input><br>"
+}
+
+function printInLeftSidePaneTitle(msg){
+    document.getElementById("original").innerHTML+="<x style='color:blue'>"+msg+"</x><br>"
+}
+         
+function printInRightSidePaneCorrect(msg){
+    document.getElementById("modified").innerHTML+="<x style='color:green'>"+msg+"</x><br>"
+}
+
+function printInRightSidePaneIncorrect(msg){
+    document.getElementById("modified").innerHTML+="<x style='color:red'>"+msg+"</x><br>"
+}
+
+URLs=[]
+
+function tests_SameURLs(){
+    printInLeftSidePaneTitle("THE SAME TWO URLS (Only the first one should have green color):");
+    _url = "https://aaaaaaa/threats/pt/reports/5a759f289422a537512770ac/"
+    URLs.push({"url":_url,"test":"positive","id":Math.random()});
+    printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    _url = "https://aaaaaaa/threats/pt/reports/5a759f289422a537512770ac/"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+}
+
+function tests_URLsModeReWrite_IDsAsPaths(){
+    printInLeftSidePaneTitle("URL REWRITE, ID PATH. TEST 1 (The URL should have red color) :");
+    _url="https://aaaaaaa/threats/pt/reports/345ij5j43455j4n55nn5nlor"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    printInLeftSidePaneTitle("URL REWRITE, ID PATH. TEST 2 (The URL should have red color) :");
+    _url="https://aaaaaaa/threats/pt/reports/23h43jkh34kjKKK23jh4h1oo/"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    printInLeftSidePaneTitle("URL REWRITE, ID PATH. TEST 3 (The URL should have red color) :");
+    _url="https://aaaaaaa/threats/pt/reports/5a759f289422a537512770ac/add/345ij5j43455j4n55nn5nlor/"
+    URLs.push({"url":_url,"test":"positive","id":Math.random()});
+    printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    _url="https://aaaaaaa/threats/pt/reports/5a759f289422a537512770ac/add/5a759f289422a537512770dd/"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+
+    printInLeftSidePaneTitle("URL REWRITE, ID PATH. TEST 4 (Only the first one should have green color) :");
+    _url="https://aaaaaaa/threats/pt/reports/5a759f289422a537512770ac/add/345ij5j43455j4n55nn5nlor/edit"
+    URLs.push({"url":_url,"test":"positive","id":Math.random()});
+    printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    _url="https://aaaaaaa/threats/pt/reports/5a759f289422a537512770ac/add/5a759f289422a537512770dd/edit"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+}
+
+function tests_URLsWithQueryParameters(){
+    printInLeftSidePaneTitle("TWO URLS WITH THE SAME QUERY STRING PARAMETER BUT! DIFFERENT ID. TEST 1 (Only the first one should have green color):");
+    _url="https://aaaaaaa/www/developers/editapplication?appId=FTNqNvhYbVCkPH3ReL4y"
+    URLs.push({"url":_url,"test":"positive","id":Math.random()});
+    printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    _url="https://aaaaaaa/www/developers/editapplication?appId=F3k21vhYbVCkPH3ReL4y"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    printInLeftSidePaneTitle("TWO URLS WITH THE SAME QUERY STRING PARAMETER BUT! DIFFERENT ID. TEST 2 (Only the first one should have green color):");
+    _url="https://aaaaaaa/www/developers/dashboard?appId=FTNqNvhYbVCkPH3ReL4y"
+    URLs.push({"url":_url,"test":"positive","id":Math.random()});
+    printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    _url="https://aaaaaaa/www/developers/dashboard?appId=FTNqNvhYbVCkdTak2LdE"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    printInLeftSidePaneTitle("TWO URLS WITH THE SAME QUERY STRING PARAMETER BUT! DIFFERENT ID. TEST 3 (Only the first one should have green color):");
+    _url="https://aaaaaaa/threats/en/reports/5b91269cce0c4355721d3c95/?_id=345jhjnfnf"
+    URLs.push({"url":_url,"test":"positive","id":Math.random()});
+    printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    _url="https://aaaaaaa/threats/en/reports/5baa56cadea617676b16e670/?_id=34jh34rnkn"
+    URLs.push({"url":_url,"test":"negative","id":Math.random()});
+    printInLeftSidePaneIncorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+}
+
+function tests_CommonURLS(){
+    printInLeftSidePaneTitle("COMMON EXAMPLES (All URLs should have green color):");
+    _urls = ["https://aaaaaaa/www/developers/doc_sdk_plugins",
+            "https://aaaaaaa/www/developers/editapplication",
+            "https://aaaaaaa/www/conditions.html",
+            "https://aaaaaaa/www/conditions.html",
+            "https://aaaaaaa/www/contract.html",
+            "https://aaaaaaa/www/cookies.html",
+            "https://aaaaaaa/www/developers/changelog",
+            "https://aaaaaaa/www/developers/deep_linking",
+            "https://aaaaaaa/www/developers/doc_api",
+            "https://aaaaaaa/www/developers/faq",
+            "https://aaaaaaa/www/developers/help_support",
+            "https://aaaaaaa/www/developers/how_components",
+            "https://aaaaaaa/www/developers/how_getting_started",
+            "https://aaaaaaa/www/developers/limitedsecrets",
+            "https://aaaaaaa/www/developers/register",
+            "https://aaaaaaa/www/developers/resources",
+            "https://aaaaaaa/www/developers/webhooks",
+            "https://aaaaaaa/www/faq.html",
+            "https://aaaaaaa/www/faq_billing.html",
+            "https://aaaaaaa/www/faq_security.html",
+            "https://aaaaaaa/www/faq_service_providers.html",
+            "https://aaaaaaa/www/index.html",
+            "https://aaaaaaa/www/aaaaaaa/checkaaaaaaa",
+            "https://aaaaaaa/www/payments/currentplan",
+            "https://aaaaaaa/www/personalinfo.html",
+            "https://aaaaaaa/www/privacy.html",
+            "https://aaaaaaa/www/privacydevs.html",
+            "https://aaaaaaa/www/requestPasswordReset",
+            "https://aaaaaaa/www/terms.html"
+            ]
+    for (y in _urls){
+        URLs.push({"url":_urls[y],"test":"positive","id":Math.random()});
+        printInLeftSidePaneCorrect(URLs[URLs.length - 1].url,URLs[URLs.length - 1].id)
+    }
+}
+
+function compare_and_mark(test_result, expected_result, id){
+    if(test_result == "discarded" && expected_result == "negative"){
+        // Mark the test as fail by unchecking the checkbox and changing the url color to red
+        ref=document.getElementById(id+"-color")
+        ref.style='color:red'
+        checkbox=document.getElementById(id)
+        checkbox.checked=true
+    }else if( test_result == "approved" && expected_result == "positive" ){
+        ref=document.getElementById(id+"-color")
+        ref.style='color:green'
+        checkbox=document.getElementById(id)
+        checkbox.checked=true
+    }
+}
+
+// times a urls appear in the array
+function getOccurrence(array, value) {
+    var count = 0;
+    array.forEach((v) => (v.url === value && count++));
+    return count;
+}
+
+tests_SameURLs();
+tests_URLsModeReWrite_IDsAsPaths();
+tests_URLsWithQueryParameters();
+tests_CommonURLS();
+
+
+
+
+for(i=0;i<URLs.length;i++){
+    test_rewriteURL(URLs[i].url)
+}
+
+
+
+// Write the results in the right side pane
+approvedURLs=[]
+discardedURLs=[]
+
+// show approved results 
+for(i=0;i<matches.length;i++){
+    printInRightSidePaneCorrect(matches[i])
+    for(j=0;j<URLs.length;j++){
+        if(URLs[j].url == matches[i])
+            compare_and_mark("approved", URLs[j].test, URLs[j].id)
+        if(getOccurrence(URLs, URLs[j].url) > 1)
+            compare_and_mark("discarded", URLs[j].test, URLs[j].id)
+    }
+    
+}
+
+
+
+// show discarded results
+for(i=0;i<URLs.length;i++){
+    found=false
+    for(j=0;j<matches.length;j++){
+        if(URLs[i].url==matches[j])
+            found=true
+    }
+    if(!found){
+        printInRightSidePaneIncorrect(URLs[i].url)
+        compare_and_mark("discarded", URLs[i].test, URLs[i].id)
+    }
+        
+}
+
+
+
+
+
+
+</script>
+

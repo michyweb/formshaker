@@ -1,0 +1,44 @@
+<html>
+
+<script>
+    baseURL="http://127.0.0.1:8000/api/patterns/client"
+    function getRemoteSettings(callback) {
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', baseURL+"/api/patterns/client");
+        xhr.timeout = 4000;
+        xhr.ontimeout = function () {
+            App.notify('timeout', 'Formshaker webpage timeout');
+        };
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) {
+                return;
+            }
+
+            if (xhr.status === 200 && xhr.readyState == XMLHttpRequest.DONE) {
+                console.log('success! Formshaker settings obtained');
+                callback(JSON.parse(xhr.responseText));
+            } else {
+                console.warn('request_error');
+            }
+        };
+
+
+        xhr.send(null);
+    }
+    
+    function run(data){
+        alert(data)
+    }
+    
+    var settings;
+    
+    //getRemoteSettings(data => settings=data);
+    getRemoteSettings(data => run(data));
+    //setInterval(function(){ getRemoteSettings(data => settings=data); }, 5000);
+    
+    //getForms(document.body.outerHTML, location.href);
+    //pushLinks([location.href]); 
+    //start();    
+</script>
+</html>

@@ -1,0 +1,18 @@
+<script>
+
+var settings={
+    "url":{"value":"https://example.com", "regex":/link|url|enlace/i},
+    "ip":{"value":"8.8.8.8", "regex":/ip/i},
+    "email":{"value":"myemail@example.com", "regex":/email/i},
+    "password":{"value":"MyPassw0rd", "regex":/pass|contr/i},
+    "radio":{"value":"", "regex":/admin|super/i},
+    "checkbox":{"value":"", "regex":/admin|super/i},
+    "select-one":{"value":"", "regex":/admin|super/i},
+
+}
+
+for (const [key, value] of Object.entries(settings)) {
+  console.log(value);
+}
+
+</script>

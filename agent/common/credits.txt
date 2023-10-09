@@ -1,0 +1,9 @@
+/**
+ * FormShaker JS, Spider and Proxy for Forms.
+ * @author Ricardo Martin Rodriguez, @M1ChyB
+ * @author Juan Manuel Garcia Martinez
+ * @Credits Leonardo Dutra for the original code of the crawler
+ * @version 1
+ * @see {@link https://github.com/michyweb/formshaker}
+ */
+

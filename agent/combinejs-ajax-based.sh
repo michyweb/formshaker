@@ -1,0 +1,2 @@
+#!/bin/bash
+cat common/prefix-main.txt common/settings-utils.js common/link-utils.js ajax-based/link-utils.ajax.js  common/spider-utils.js common/pivot-utils.js ajax-based/pivot-utils.ajax.js common/input-utils.js common/form-utils.js ajax-based/main.ajax.js common/sufix-main.txt > malicious.ajax.min.js

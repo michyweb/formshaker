@@ -1,0 +1,6 @@
+pymongo
+fastapi
+uvicorn
+jsmin
+websockets
+requests

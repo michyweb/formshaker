@@ -1,0 +1,39 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - "./data/var_lib_mongodb:/data/db"
+      - "./data/var_log_mongodb:/var/log/mongodb"
+      - "./data/dump:/dump"
+      - "./data/mongorestore.sh:/docker-entrypoint-initdb.d/mongorestore.sh"
+  dashboard:
+    build: 
+      context: ./dashboard
+      dockerfile: Dockerfile-develop
+    restart: always
+    hostname: dashboard
+    volumes:
+      - "./dashboard:/dashboard"
+    command: tail -F /dev/null
+    environment:
+      - BACKEND_PASSWORD=changemenow
+    ports:
+      - "80:3000"
+  api:
+    build: ./api
+    hostname: api
+    restart: always
+    ports:
+      - "4040:4040"
+    links:
+      - mongo
+    volumes:
+      - "./agent:/agent"
+    #   - "./api:/code"
+    # command: tail -F /dev/null
+    environment:
+      - BACKEND_PASSWORD=changemenow

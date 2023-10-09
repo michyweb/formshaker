@@ -1,0 +1,8 @@
+export const LOAD_FORMS = 'LOAD_FORMS'
+export const APPEND_FORM = 'APPEND_FORM'
+export const REPLACE_FORM = 'REPLACE_FORM'
+export const LOAD_INJECT = 'LOAD_INJECT'
+export const MODIFY_INJECT = '  MODIFY_INJECT'
+export const STORE_IMAGE = 'STORE_IMAGE'
+export const SUBMIT_EDIT_FORM = 'SUBMIT_EDIT_FORM'
+export const CLEAN_FORMS_REDUCER = 'CLEAN_FORMS_REDUCER'

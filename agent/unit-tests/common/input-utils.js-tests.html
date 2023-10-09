@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+p {
+  background-color: yellow;
+}
+#t2 {
+  background-color: orange;
+}
+#result {
+  background-color: violet;
+  color:white;
+}
+
+#container {
+  display: flex;                  /* establish flex container */
+  flex-direction: row;            /* default value; can be omitted */
+  flex-wrap: nowrap;              /* default value; can be omitted */
+  justify-content: space-between; /* switched from default (flex-start, see below) */
+  background-color: lightyellow;
+}
+#container > div {
+  width: 33%;
+  height: 100%;
+  border: 2px dashed red;
+}
+</style>
+</head>
+<body>
+<script src="../../common/input-utils.js"></script>
+<script>
+    var settings={
+        "injectasitgoes":true,
+        "seeds":["/admin","/memberadmin","/admn","/bb-admin","/adminpanel","/webadmin","/moderator","/account"],
+        "blacklist": ["contact","login","authe","reset","regis","setlan","logout"],
+        "inputs": [{
+            "name": "url",
+            "regex": "link|url|enlace",
+            "value": "https://hackerurl"
+        }, {
+            "name": "phone",
+            "regex": "phone|telefono",
+            "value": "999555111"
+        }, {
+            "name": "ip",
+            "regex": "ip",
+            "value": "IP ATTACKER"
+        }, {
+            "value": "hacker@email.com",
+            "name": "email",
+            "regex": "email"
+        }, {
+            "regex": "pass|contr",
+            "value": "HACKERPASSW0RD",
+            "name": "password"
+        }, {
+            "name": "radio",
+            "regex": "admin|super"
+        }, {
+            "name": "checkbox",
+            "regex": "admin|super"
+        }, {
+            "name": "select-one",
+            "regex": "admin|super"
+        }]
+    }
+
+    // Default password WHEN there are no settings: FormShaker!1
+</script>
+<script>
+function htmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + "<br>";
+}
+
+document.write('<div id="container">')
+for(i=0;i<4;i++){
+    if(i==0){
+        allInputsFilled=false
+        modified=false
+        defaultvalue = defaultvalue1 = defaultvalue2 = ""
+        document.write('<div id="center">')
+        document.write('<h1 style="color:blue">EXAMPLE OF INPUTS WHEN SETTINGS ARE ENABLE AND THE FILLING OF EMPTY INPUTS IS DISABLED</h1>')
+        
+    }else if(i==1){
+        allInputsFilled=true
+        modified=false
+        defaultvalue = defaultvalue1 = defaultvalue2 = ""
+        document.write('<div id="left">')
+        document.write('<h1 style="color:blue">EXAMPLE OF INPUTS WHEN SETTINGS ARE ENABLE AND THE FILLING OF EMPTY INPUTS IS ENABLE</h1>')
+    }else if(i==2){
+        allInputsFilled=true
+        modified=true
+        document.write('<div id="right">')
+        document.write('<h1 style="color:blue">EXAMPLE OF INPUTS WHEN SETTINGS ARE ENABLE, THE FILLING OF EMPTY INPUTS IS ENABLE AND SOME INPUTS WERE CHANGED FROM THE WEBAPP</h1>')
+    }else if(i==3){
+        allInputsFilled=true
+        modified=false
+        defaultvalue = defaultvalue1 = defaultvalue2 = ""
+        document.write('<div id="right">')
+        document.write('<h1 style="color:blue">EXAMPLE OF INPUTS WHEN SETTINGS ARE DISABLED AND THE FILLING OF EMPTY INPUTS IS ENABLE</h1>')
+        settings={"inputs":[]}
+    }
+
+    document.write('<form>')
+    
+    
+    document.write('<h2>Unrecognized input:</h2>')
+    document.write(htmlEntities('<input type="text" value="" ></input>'))
+    document.write('<b><input type="text" value="" ></input></b><br>')
+    var input={"Type":"text","name":"whatever","value":"","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Unrecognized input + pattern:</h2>')
+    document.write(htmlEntities('<input type="text" value="" pattern="[a-zA-Z]{6}" ></input>'))
+    document.write('<b><input type="text" value="" pattern="[a-zA-Z]{6}" ></input></b><br>')
+    var input={"Type":"text","name":"whatever","value":"","pattern":"[a-zA-Z]{6}","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty Latitude/Longitude input + pattern:</h2>')
+    document.write(htmlEntities('<input type="text" value="" pattern="-?\d{1,3}\.\d+" ></input>'))
+    document.write('<b><input type="text" value="" pattern="-?\d{1,3}\.\d+" ></input></b><br>')
+    var input={"Type":"text","name":"longitude","value":"","pattern":"-?\d{1,3}\.\d+","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty Price input + pattern:</h2>')
+    document.write(htmlEntities('<input type="text" value="" pattern="\d+(\.\d{2})?"></input>'))
+    document.write('<b><input type="text" value="" pattern="\d+(\.\d{2})?"></input></b><br>')
+    var input={"Type":"text","name":"Price","value":"","pattern":"\d+(\.\d{2})?","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty Date input + pattern (dd/mm/yyyy or mm/dd/yyyy):</h2>')
+    document.write(htmlEntities('<input type="text" value="" pattern="\d{1,2}/\d{1,2}/\d{4}"></input>'))
+    document.write('<b><input type="text" value="" pattern="\d{1,2}/\d{1,2}/\d{4}"></input></b><br>')
+    var input={"Type":"text","name":"Date","value":"","pattern":"d{1,2}/d{1,2}/d{4}","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty IPv4 Address input + pattern:</h2>')
+    document.write(htmlEntities('<input type="text" value="" pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"></input>'))
+    document.write('<b><input type="text" value="" pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"></input></b><br>')
+    var input={"Type":"text","name":"ip","value":"","pattern":"d{1,3}.d{1,3}.d{1,3}.d{1,3}","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Populated IPv4 Address input + pattern:</h2>')
+    document.write(htmlEntities('<input type="text" value="1.1.1.1"></input> '))
+    document.write('<b><input type="text" value="1.1.1.1"></input> </b><br>')
+    var input={"Type":"text","name":"ip","value":"1.1.1.1","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty Email input + pattern:</h2>')
+    document.write(htmlEntities('<input type="email" value="" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"></input>'))
+    document.write('<b><input type="email" value="" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"></input></b><br>')
+    var input={"Type":"text","name":"email","value":"","pattern":"[a-z0-9._%+-]+@[a-z0-9.-]+.[a-z]{2,4}$","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Empty Email input:</h2>')
+    document.write(htmlEntities('<input type="text" name="email" value="" ></input>'))
+    document.write('<b><input type="text" name="email" value="" ></input></b><br>')
+    var input={"Type":"text","name":"email","value":"","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty Phone input:</h2>')
+    document.write(htmlEntities('<input type="text" value=""></input> '))
+    document.write('<b><input type="text" value=""></input> </b><br>')
+    var input={"Type":"text","name":"phone","value":"","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Populated Phone input:</h2>')
+    document.write(htmlEntities('<input type="text" name="phone" value="0788998877" ></input>'))
+    document.write('<b><input type="text" name="phone" value="0788998877" ></input></b><br>')
+    var input={"Type":"text","name":"phone","value":"0788998877","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Empty Phone input + type "tel" + unrecognized name + pattern:</h2>')
+    document.write(htmlEntities('<input type="tel" name="PhoNumber" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input> '))
+    document.write('<b><input type="tel" name="PhoNumber" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input> </b><br>')
+    var input={"Type":"tel","name":"PhoNumber","value":"","pattern":"[0-9]{3}-[0-9]{3}-[0-9]{4}","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    document.write('<h2>Empty URL input + type "text" + alternative name "link":</h2>')
+    document.write(htmlEntities('<input type="text" name="link" value=""></input> '))
+    document.write('<b><input type="text" name="link" value=""></input> </b><br>')
+    var input={"Type":"text","name":"link","value":"","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Populated URL input + type "text" + alternative name "XenlaceX":</h2>')
+    document.write(htmlEntities('<input type="text" name="XenlaceX" value="http://website.com" ></input>'))
+    document.write('<b><input type="text" name="XenlaceX" value="http://website.com" ></input></b><br>')
+    var input={"Type":"text","name":"XenlaceX","value":"http://website.com","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Empty URL input + type "text" + alternative name "XenlaceX":</h2>')
+    document.write(htmlEntities('<input type="text" name="XenlaceX" value=""></input> '))
+    document.write('<b><input type="text" name="XenlaceX" value=""></input> </b><br>')
+    var input={"Type":"text","name":"XenlaceX","value":"","pattern":"","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Empty URL input + type "url" + unrecognized name + pattern:</h2>')
+    document.write(htmlEntities('<input type="url" name="URIapp" pattern="https?://.+" ></input>'))
+    document.write('<b><input type="url" name="URIapp" pattern="https?://.+" ></input></b><br>')
+    var input={"Type":"url","name":"URIapp","value":"","pattern":"https?://.+","checked":false,"defaultvalue":"","modified":modified}
+    if(modified) input.value="UpdateValueFromTheWebPanel"
+    document.write("<p>"+JSON.stringify(validateInputs(input,allInputsFilled), 4)+"</p>")
+    document.write("<p id='result'>New value: "+validateInputs(input,allInputsFilled).value+"</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    var list = [{"Type":"radio","name":"test1","value":"option/value0","checked":false,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test1","value":"option/value1","checked":true,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test1","value":"option/value2","checked":false,"defaultvalue":"","modified":modified}]
+    if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+        list[2].value="UpdateValueFromTheWebPanel"
+    }
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Radio input (test 1.1) + name "test1" + type "radio" + unchecked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test1"  value="option/value0" >Option 0</input>'))
+    document.write('<b><input type="radio" name="test1"  value="option/value0" >Option 0</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Radio input (test 1.0) + name "test1" + type "radio" + checked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test1" value="option/value1" checked >Option 1</input>'))
+    document.write('<b><input type="radio" name="test1" value="option/value1" checked >Option 1</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Radio input (test 1.1) + name "test1" + type "radio" + unchecked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test1" value="option/value2" >Option 2</input>'))
+    document.write('<b><input type="radio" name="test1" value="option/value2" >Option 2</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[2], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p >"+JSON.stringify(getFinalRadioInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalRadioInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+    var list = [{"Type":"radio","name":"test2","value":"option/value1","checked":false,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test2","value":"option/value2","checked":false,"defaultvalue":"","modified":modified}]
+        if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+    }
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Radio input (test 2.0) + name "test2" + type "radio" + unchecked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test2" value="option/value1">Option 1</input> '))
+    document.write('<b><input type="radio" name="test2" value="option/value1">Option 1</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Radio input (test 2.1) + name "test2" + type "radio" + unchecked </h2>')
+    document.write(htmlEntities('<input type="radio" name="test2" value="option/value2">Option 2</input> '))
+    document.write('<b><input type="radio" name="test2" value="option/value2">Option 2</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p >"+JSON.stringify(getFinalRadioInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalRadioInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+    var list = [{"Type":"radio","name":"test2","value":"regularuser","checked":true,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test2","value":"superadmin","checked":false,"defaultvalue":"","modified":modified}]
+        if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+    }
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Radio input (test 2.0) + name "test2" + type "radio" + checked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test2" value="regularuser" checked >Regular User</input>'))
+    document.write('<b><input type="radio" name="test2" value="regularuser" checked >Regular User</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Radio input (test 2.1) + name "test2" + type "radio" + unchecked + name matches the word admin present in the attacker settings </h2>')
+    document.write(htmlEntities('<input type="radio" name="test2" value="superadmin">Super Admin</input> '))
+    document.write('<b><input type="radio" name="test2" value="superadmin">Super Admin</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p >"+JSON.stringify(getFinalRadioInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalRadioInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+    
+    
+    // --------------------------------------------------------------
+    document.write("<hr />")
+    var list = [{"Type":"radio","name":"test3.0","value":"regularuser","checked":true,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test3.0","value":"superadmin","checked":false,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test3.1","value":"blue","checked":true,"defaultvalue":"","modified":modified},{"Type":"radio","name":"test3.1","value":"white","checked":false,"defaultvalue":"","modified":modified}]
+    if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+        list[2].value="UpdateValueFromTheWebPanel"
+        list[3].value="UpdateValueFromTheWebPanel"
+    }
+
+
+    document.write('<h1>Two different group of radios in the same form</h1>')
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Radio input (test 3.0.0) + name "test3.0" + type "radio" + checked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test3.0" value="regularuser" checked >Regular User</input>'))
+    document.write('<b><input type="radio" name="test3.0" value="regularuser" checked >Regular User</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Radio input (test 3.0.1) + name "test3.0" + type "radio" + unchecked + name matches the word admin present in the attacker settings </h2>')
+    document.write(htmlEntities('<input type="radio" name="test3.0" value="superadmin">Super Admin</input> '))
+    document.write('<b><input type="radio" name="test3.0" value="superadmin">Super Admin</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+    
+    document.write('<h2>Radio input (test 3.0.2) + name "test3.1" + type "radio" + checked</h2>')
+    document.write(htmlEntities('<input type="radio" name="test3.1" value="blue" checked >Blue</input>'))
+    document.write('<b><input type="radio" name="test3.1" value="blue" checked >Blue</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Radio input (test 3.0.3) + name "test3.1" + type "radio" + unchecked  </h2>')
+    document.write(htmlEntities('<input type="radio" name="test3.1" value="white">White</input> '))
+    document.write('<b><input type="radio" name="test3.1" value="white"White</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p >"+JSON.stringify(getFinalRadioInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalRadioInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+    
+
+    var list = [{"Type":"checkbox","name":"pepe","value":"","checked":false,"defaultvalue":"","modified":modified},{"Type":"checkbox","name":"scales","value":"","checked":true,"defaultvalue":"","modified":modified},{"Type":"checkbox","name":"horns","value":"","checked":false,"defaultvalue":"","modified":modified}]
+    if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+        list[2].value="UpdateValueFromTheWebPanel"
+    }
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Checkbox input (test 2.0) + type "checkbox" + unchecked</h2>')
+    document.write(htmlEntities('<input type="checkbox" id="pepe" name="pepe">Pepe</input>  '))
+    document.write('<b><input type="checkbox" id="pepe" name="pepe">Pepe</input>  </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Checkbox input (test 2.1) + type "checkbox" + checked</h2>')
+    document.write(htmlEntities('<input type="checkbox" id="scales" name="scales" checked>Scales</input> '))
+    document.write('<b><input type="checkbox" id="scales" name="scales" checked>Scales</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Checkbox input (test 2.2) +  type "checkbox" + unchecked </h2>')
+    document.write(htmlEntities('<input type="checkbox" id="horns" name="horns">Horns</input> '))
+    document.write('<b><input type="checkbox" id="horns" name="horns">Horns</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[2], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p >"+JSON.stringify(getFinalCheckboxInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalCheckboxInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    var list = [{"Type":"checkbox","name":"scales","value":"","checked":false,"defaultvalue":"","modified":modified},{"Type":"checkbox","name":"horns","value":"","checked":false,"defaultvalue":"","modified":modified}]
+    if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+    }
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Checkbox input (test 2.0) + type "checkbox" + unchecked</h2>')
+    document.write(htmlEntities('<input type="checkbox" id="scales" name="scales">Scales</input>  '))
+    document.write('<b><input type="checkbox" id="scales" name="scales">Scales</input>  </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Checkbox input (test 2.1) +  type "checkbox" + unchecked </h2>')
+    document.write(htmlEntities('<input type="checkbox" id="horns" name="horns">Horns</input> '))
+    document.write('<b><input type="checkbox" id="horns" name="horns">Horns</input> </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p>"+JSON.stringify(getFinalCheckboxInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalCheckboxInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+    
+    if(modified)
+        value=""
+
+    var list = [{"Type":"checkbox","name":"supervisor","value":"","checked":false,"defaultvalue":"","modified":modified},{"Type":"checkbox","name":"regularuser","value":"","checked":true,"defaultvalue":"","modified":modified}]
+    if(modified){ 
+        list[0].value="UpdateValueFromTheWebPanel"
+        list[1].value="UpdateValueFromTheWebPanel"
+        
+    }
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write('<h2>Checkbox input (test 3.0) + type "checkbox" + unchecked + name matches the word admin present in the attacker settings</h2>')
+    document.write(htmlEntities('<input type="checkbox" id="supervisor" name="supervisor">Supervisor</input>  '))
+    document.write('<b><input type="checkbox" id="supervisor" name="supervisor">Supervisor</input>  </b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[0], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write('<h2>Checkbox input (test 3.1) + type "checkbox" + checked </h2>')
+    document.write(htmlEntities('<input type="checkbox" id="regularuser" name="regularuser" checked>Regular User</input>'))
+    document.write('<b><input type="checkbox" id="regularuser" name="regularuser" checked>Regular User</input></b><br>')
+    document.write("<p id='t2'>"+JSON.stringify(list[1], null, 4)+"</p>")
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p>"+JSON.stringify(getFinalCheckboxInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalCheckboxInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    if(modified){
+        defaultvalue="UpdateValueFromTheWebPanel"
+    }
+    var list = [{"Type":"select-one","name":"pets","value":"[{\"value\":\"\",\"text\":\"--Please aaa an option--\",\"selected\":true},{\"value\":\"dog\",\"text\":\"Dog\",\"selected\":false},{\"value\":\"cat\",\"text\":\"Cat\",\"selected\":false},{\"value\":\"hamster\",\"text\":\"Hamster\",\"selected\":false},{\"value\":\"parrot\",\"text\":\"Parrot\",\"selected\":false},{\"value\":\"spider\",\"text\":\"Spider\",\"selected\":false},{\"value\":\"goldfish\",\"text\":\"Goldfish\",\"selected\":false}]","defaultvalue":defaultvalue, "modified":modified}]
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write("<h2>Select input with default selected value that contains the word 'choose' </h2>")
+    document.write(htmlEntities('<select name="pets" id="pet-select">    <option value="">--Please choose an option--</option>    <option value="dog">Dog</option>    <option value="cat">Cat</option>    <option value="hamster">Hamster</option>    <option value="parrot">Parrot</option>    <option value="spider">Spider</option>    <option value="goldfish">Goldfish</option></select>'))
+    document.write('<select name="pets" id="pet-select">    <option value="">--Please choose an option--</option>    <option value="dog">Dog</option>    <option value="cat">Cat</option>    <option value="hamster">Hamster</option>    <option value="parrot">Parrot</option>    <option value="spider">Spider</option>    <option value="goldfish">Goldfish</option></select>')
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p>"+JSON.stringify(getFinalSelectOneInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalSelectOneInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    if(modified)
+        defaultvalue="UpdateValueFromTheWebPanel"
+        
+    var list = [{"Type":"select-one","name":"pets","value":"[{\"value\":\"squirrel\",\"text\":\"squirrel\",\"selected\":false},{\"value\":\"dog\",\"text\":\"Dog\",\"selected\":true},{\"value\":\"cat\",\"text\":\"Cat\",\"selected\":false},{\"value\":\"hamster\",\"text\":\"Hamster\",\"selected\":false},{\"value\":\"parrot\",\"text\":\"Parrot\",\"selected\":false},{\"value\":\"spider\",\"text\":\"Spider\",\"selected\":false},{\"value\":\"goldfish\",\"text\":\"Goldfish\",\"selected\":false}]","defaultvalue":defaultvalue, "modified":modified}]
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write("<h2>Select input with default selected value that doesn't contain the word 'choose' </h2>")
+    document.write(htmlEntities('<select name="pets" id="pet-select">    <option value="squirrel">squirrel</option>    <option value="dog" selected>Dog</option>    <option value="cat">Cat</option>    <option value="hamster">Hamster</option>    <option value="parrot">Parrot</option>    <option value="spider">Spider</option>    <option value="goldfish">Goldfish</option></select>'))
+    document.write('<select name="pets" id="pet-select">    <option value="squirrel">squirrel</option>    <option value="dog" selected>Dog</option>    <option value="cat">Cat</option>    <option value="hamster">Hamster</option>    <option value="parrot">Parrot</option>    <option value="spider">Spider</option>    <option value="goldfish">Goldfish</option></select>')
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p>"+JSON.stringify(getFinalSelectOneInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalSelectOneInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+    if(modified){
+        defaultvalue="UpdateValueFromTheWebPanel"
+    }
+    var list = [{"Type":"select-one","name":"rol","value":"[{\"value\":\"regular\",\"text\":\"RegularUser\",\"selected\":true},{\"value\":\"admin\",\"text\":\"Admin\",\"selected\":false}]","defaultvalue":defaultvalue,"modified":modified}]
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write("<h2>Select input with default selected value 'regular' that matches the word admin present in the attacker settings </h2>")
+    document.write(htmlEntities('<select name="rol" id="pet-select">    <option value="regular" selected>RegularUser</option>    <option value="admin">Admin</option></select>'))
+    document.write('<select name="rol" id="pet-select">    <option value="regular">RegularUser</option>    <option value="admin">Admin</option></select>')
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p>"+JSON.stringify(getFinalSelectOneInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalSelectOneInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")
+    
+    
+    // --------------------------------------------------------------
+    document.write("<hr />")
+
+
+    if(modified){
+        defaultvalue1="UpdateValueFromTheWebPanel"
+        defaultvalue2="UpdateValueFromTheWebPanel"
+    }
+    var list = [{"Type":"select-one","name":"rol","value":"[{\"value\":\"regular\",\"text\":\"RegularUser\",\"selected\":true},{\"value\":\"admin\",\"text\":\"Admin\",\"selected\":false}]","defaultvalue":defaultvalue1,"modified":modified},{"Type":"select-one","name":"color","value":"[{\"value\":\"blue\",\"text\":\"Blue\",\"selected\":true},{\"value\":\"white\",\"text\":\"White\",\"selected\":false}]","defaultValue":defaultvalue2,"modified":modified}]
+
+    document.write("<p2>"+JSON.stringify(list, null, 4)+"</p2>")
+    document.write("<h2>Select input with default selected value 'regular' that matches the word admin present in the attacker settings </h2>")
+    document.write(htmlEntities('<select name="rol" id="pet-select">    <option value="regular">RegularUser</option>    <option value="admin">Admin</option></select>'))
+    document.write('<select name="rol" id="pet-select">    <option value="regular">RegularUser</option>    <option value="admin">Admin</option></select>')
+    document.write("<br>")
+
+    document.write("<h2>Select input with default selected value 'Blue'  </h2>")
+    document.write(htmlEntities('<select name="color" id="pet-select">    <option value="Blue">Blue</option>    <option value="White">White</option></select>'))
+    document.write('<select name="color" id="pet-select">    <option value="Blue">Blue</option>    <option value="White">White</option></select>')
+    document.write("<br>")
+
+    document.write("<h2>Final input:</h2>")
+    document.write("<p>"+JSON.stringify(getFinalSelectOneInputs(list,allInputsFilled), null, 4)+"</p>")
+    document.write("<p id='result'>New value: <br>")
+    result=getFinalSelectOneInputs(list,allInputsFilled)
+    for(z of (result==null? []: result))
+        document.write(z.value+"<br>")
+    document.write("</p>")
+    document.write("<br>")    
+    
+    
+    
+    
+    document.write('</form>')
+    document.write('</div>')
+}
+document.write('</div>')
+</script>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+
+
+function AjaxMode() {
+    var mode = "ajax"
+    debug_ajax_showLinks = showLinks
+    debug = false
+    
+    baseURL="{ ENDPOINT_URL }"
+    endpoint = baseURL+"/api/forms"
+    sessionID = createSessionID();
+    var executionID = getExecutionID();
+    standalone=false;
+
+

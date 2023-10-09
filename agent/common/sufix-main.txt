@@ -1,0 +1,39 @@
+
+
+
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}
+
+if (inIframe()){
+    // prevent the iframe crawling from reloading the js lib again and again
+    if(debug)
+        console.log("the script can't be executed inside an iframe, execution cancel!")
+    throw new Error();
+}
+
+if (MUTEX) {
+    if(debug)
+        console.log("Another execution is running, execution cancel!")
+    throw new Error();
+}
+MUTEX = true
+
+getModifiedForms();
+setInterval(function(){ getModifiedForms(); }, 3000);
+
+if (typeof AjaxMode === "function")
+    activeModes["ajax"] = new AjaxMode()
+if (typeof IframeMode === "function")
+    activeModes["iframe"] = new IframeMode()
+
+var key = Object.keys(activeModes)[0];
+
+if(debug)
+    console.log("[+] Starting mode: "+key)
+
+window.onload = getRemoteSettings(data => activeModes[key].init(data));

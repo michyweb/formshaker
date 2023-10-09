@@ -1,0 +1,2 @@
+#!/bin/bash
+cat common/prefix-main.txt common/settings-utils.js iframe-based/link-utils.iframe.js common/link-utils.js common/spider-utils.js common/pivot-utils.js iframe-based/pivot-utils.iframe.js common/input-utils.js common/form-utils.js iframe-based/core.iframe.js iframe-based/main.iframe.js common/sufix-main.txt > malicious.iframe.min.js

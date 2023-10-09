@@ -1,0 +1,204 @@
+<script src="../iframe-based/link-utils.iframe.js"></script>
+<script>
+/*
+*       URL rewrite validation
+*/
+matches=[]
+arrLengths = []
+arrPosition = []
+
+function getParamNames(_url){
+    var qParams = [];
+    if (_url.search) _url.search.substr(1).split`&`.forEach(item => {let [k,v] = item.split`=`; (qParams.push(k)|| "")})
+    qParams.sort()
+    queryParamstmp = qParams.join("")
+    return queryParamstmp
+}
+
+
+
+params=[]
+
+
+redundantURLs=[]
+function test_rewriteURL(newurl){
+    
+    _url = new URL(newurl)
+    pathname = (_url.pathname.endsWith("/")) ? _url.pathname : _url.pathname+"/";
+    queryParams=""
+    if(_url.search!=""){
+        queryParams=getParamNames(_url)
+
+    }
+    pathquerylen = pathname.length+queryParams.length
+    
+    if(matches.length>0){
+
+        samelength =false
+        
+        for(x in arrLengths){
+            // ya se han metido varias urls en el array, si una de ellas coincide con la longitud de la que se está probando entonces se revisa si se trata de un pathid...
+            if (arrLengths[x] == pathquerylen){
+            
+                samelength =true
+                
+                // si tiene URL parameters...
+                if(_url.search!="" && !params.includes(pathname+"?"+queryParams)){
+                    //console.log("->"+newurl+" - "+pathname+"?"+queryParams)
+                    _queryParams=getParamNames(new URL(matches[x]));
+
+                    /* _queryParams = querystring parameters de una URL con la misma longitud que la testada en este momento
+                       queryParams = querystring parameters de la URL testada en este momento
+                       si hay una coincidencia de una URL añadida que tiene los mismos parametros terminamos el test.
+                    */
+                    if(_queryParams == queryParams){
+                        redundantURLs.push(newurl)
+                        params.push(pathname+"?"+queryParams)
+                        return;
+                    }
+                }
+            }
+            
+        }            
+        
+        if(samelength){
+            arrypathname = pathname.split("/")
+            //console.log(newurl)
+            
+            foundinknownpositions=false;
+            if(arrPosition.length>0){
+                path_id=false
+                for(y in arrPosition){
+                    path=arrypathname[arrPosition[y]]
+                    
+                    if(path != null && path!="" &&  isit_a_pathid(path)){
+                        console.log("1) path id: "+path)
+                        foundinknownpositions=true
+                        path_id=true
+                        break;
+                    }
+                    
+                }
+                //if(!path_id)
+                //    matches.push(newurl)
+            }
+            if(foundinknownpositions==false){
+                path_id=false
+                for(y in arrypathname){
+                    path=arrypathname[y]
+                    
+                    if(path != null && path!="" && isit_a_pathid(path)){
+                        console.log("2) path id: "+path)
+                        path_id=true
+                        break;
+                    }
+                    
+                }
+                if(!path_id){
+                    matches.push(newurl)
+                    return newurl;
+                }
+                    
+                
+                       
+            }
+        }else{
+
+            arrLengths.push(pathname.length+queryParams.length)
+            matches.push(newurl)
+            return newurl;
+        } 
+        
+    }else{
+
+        arrLengths.push(pathname.length+queryParams.length)
+        matches.push(newurl)
+        return newurl;
+    }
+
+}
+
+/*
+*       URL rewrite validation
+*/
+
+// pueden haber dos urls con la misma longitud, con esta prueba se evita que no se añada
+function isit_a_pathid(path){
+   
+    pathlength = path.length
+    pathnumbers = path.replace(/\D/g,'');
+    if(pathnumbers !== ""){
+        path_count_of_numbers = pathnumbers.length
+        
+        // si no tiene al menos dos números no es un id, o será una mierda de id, olvidate de lanzar esto y ve directo al RCE
+        if(path_count_of_numbers>2){
+        
+            // Password cracking speed 1 million per second, A-Z 0-9, 8 digits = 32.65 days. 9 digits = 3.22 years
+            if(pathlength >= 8){
+                
+                //console.log(arrypathname)
+                //console.log(pathnumbers)
+                
+                // si la longitud de números es mayor que la tercera parte de la longitud del nombre de ese directorio, se considera que el path es un id
+                if(path_count_of_numbers>=path_count_of_numbers/3){
+                    // se añade a un array los indeces de la posición donde se encontró el path id
+                    if(!arrPosition.includes(y))
+                        arrPosition.push(y)
+                    
+                    return true;
+                }
+            }
+        }
+    }
+    
+}
+
+
+b=[]
+
+b.push("https://aaaaaaaaaaa/threats/pt/reports/5a759f289422a537512770ac/")
+b.push("https://aaaaaaaaaaa/threats/pt/reports/1a4444289422a537512770zz/")
+b.push("https://aaaaaaaaaaa/www/conditions.html")
+b.push("https://aaaaaaaaaaa/www/contract.html")
+b.push("https://aaaaaaaaaaa/www/cookies.html")
+b.push("https://aaaaaaaaaaa/www/developers/changelog")
+b.push("https://aaaaaaaaaaa/www/developers/dashboard?appId=FTNqNvhYbVCkPH3ReL4y")
+b.push("https://aaaaaaaaaaa/www/developers/deep_linking")
+b.push("https://aaaaaaaaaaa/www/developers/doc_api")
+b.push("https://aaaaaaaaaaa/www/developers/doc_sdk_plugins")
+b.push("https://aaaaaaaaaaa/www/developers/editapplication")
+b.push("https://aaaaaaaaaaa/www/developers/editapplication?appId=FTNqNvhYbVCkPH3ReL4y")
+b.push("https://aaaaaaaaaaa/www/developers/faq")
+b.push("https://aaaaaaaaaaa/www/developers/faq_security.html")
+b.push("https://aaaaaaaaaaa/www/developers/help_support")
+b.push("https://aaaaaaaaaaa/www/developers/how_components")
+b.push("https://aaaaaaaaaaa/www/developers/how_getting_started")
+b.push("https://aaaaaaaaaaa/www/developers/limitedsecrets")
+b.push("https://aaaaaaaaaaa/www/developers/register")
+b.push("https://aaaaaaaaaaa/www/developers/resources")
+b.push("https://aaaaaaaaaaa/www/developers/webhooks")
+b.push("https://aaaaaaaaaaa/www/download.html")
+b.push("https://aaaaaaaaaaa/www/faq.html")
+b.push("https://aaaaaaaaaaa/www/faq_billing.html")
+b.push("https://aaaaaaaaaaa/www/faq_security.html")
+b.push("https://aaaaaaaaaaa/www/faq_service_providers.html")
+b.push("https://aaaaaaaaaaa/www/how.html")
+b.push("https://aaaaaaaaaaa/www/index.html")
+b.push("https://aaaaaaaaaaa/www/aaaaaaa/checkaaaaaaa")
+b.push("https://aaaaaaaaaaa/www/payments/currentplan")
+b.push("https://aaaaaaaaaaa/www/personalinfo.html")
+b.push("https://aaaaaaaaaaa/www/privacy.html")
+b.push("https://aaaaaaaaaaa/www/privacydevs.html")
+b.push("https://aaaaaaaaaaa/www/register")
+b.push("https://aaaaaaaaaaa/www/requestPasswordReset")
+b.push("https://aaaaaaaaaaa/www/terms.html")
+b.push("https://aaaaaaaaaaa/www/whereuseit.html")
+b=["https://aaaaaaaaaaa/www/index.html", "https://aaaaaaaaaaa/www/developers/editapplication", "https://aaaaaaaaaaa/www/developers/editapplication#", "https://aaaaaaaaaaa/www/aaaaaaa/checkaaaaaaa", "https://aaaaaaaaaaa/www/requestPasswordReset", "https://aaaaaaaaaaa/www/personalinfo.html", "https://aaaaaaaaaaa/www/developers/changelog", "https://aaaaaaaaaaa/www/developers/how_getting_started", "https://aaaaaaaaaaa/www/developers/how_components", "https://aaaaaaaaaaa/www/developers/doc_api", "https://aaaaaaaaaaa/www/developers/webhooks", "https://aaaaaaaaaaa/www/developers/limitedsecrets", "https://aaaaaaaaaaa/www/developers/deep_linking", "https://aaaaaaaaaaa/www/developers/doc_sdk_plugins", "https://aaaaaaaaaaa/www/developers/resources", "https://aaaaaaaaaaa/www/developers/help_support", "https://aaaaaaaaaaa/www/developers/faq", "https://aaaaaaaaaaa/www/payments/currentplan", "https://aaaaaaaaaaa/www/developers/editapplication?appId=TJx4VqW62AWsRZkViZR7", "https://aaaaaaaaaaa/www/developers/register", "https://aaaaaaaaaaa/www/terms.html", "https://aaaaaaaaaaa/www/cookies.html", "https://aaaaaaaaaaa/www/developers/cookies.html", "https://aaaaaaaaaaa/www/demo.html", "https://aaaaaaaaaaa/www/contact.html", "https://aaaaaaaaaaa/www/developerArea", "https://aaaaaaaaaaa/www/why.html", "https://aaaaaaaaaaa/www/components.html", "https://aaaaaaaaaaa/www/where.html", "https://aaaaaaaaaaa/www/getting.html", "https://aaaaaaaaaaa/www/plugins_sdks.html", "https://aaaaaaaaaaa/www/satellite.html", "https://aaaaaaaaaaa/www/subscription.html", "https://aaaaaaaaaaa/www/service.html", "https://aaaaaaaaaaa/www/how.html", "https://aaaaaaaaaaa/www/whereuseit.html", "https://aaaaaaaaaaa/www/register", "https://aaaaaaaaaaa/www/download.html", "https://aaaaaaaaaaa/www/faq.html", "https://aaaaaaaaaaa/www/faq_billing.html", "https://aaaaaaaaaaa/www/faq_service_providers.html", "https://aaaaaaaaaaa/www/faq_security.html", "https://aaaaaaaaaaa/www/conditions.html", "https://aaaaaaaaaaa/www/privacy.html", "https://aaaaaaaaaaa/www/contract.html", "https://aaaaaaaaaaa/www/privacydevs.html", "https://aaaaaaaaaaa/www/developers/faq_security.html", "https://aaaaaaaaaaa/www/developers/doc_image_req", "https://aaaaaaaaaaa/www/payments/billinginfo", "https://aaaaaaaaaaa/www/confirmaccountdeletion.html", "https://aaaaaaaaaaa/www/windows_plugin.html", "https://aaaaaaaaaaa/www/", "https://aaaaaaaaaaa/www/public/images/service_icon_template.psd", "https://aaaaaaaaaaa/www/public/documents/templates/Template_email_aaaaaaa_EN.zip", "https://aaaaaaaaaaa/www/public/documents/templates/Template_email_aaaaaaa_ES.zip", "https://aaaaaaaaaaa/www/public/documents/resources/aaaaaaa_protected_logo.zip", "https://aaaaaaaaaaa/www/developers/windows_plugin", "https://aaaaaaaaaaa/www/plugins_price.html", "https://aaaaaaaaaaa/download.html", "https://aaaaaaaaaaa/index.html", "https://aaaaaaaaaaa/www/developers/dashboard?appId=TJx4VqW62AWsRZkViZR7", "https://aaaaaaaaaaa/www/totpinfo.html", "https://aaaaaaaaaaa/www/developers/index.html", "https://aaaaaaaaaaa/www/developers/faq.html", "https://aaaaaaaaaaa/www/developers/faq_preferences.html", "https://aaaaaaaaaaa/www/developers/faq_service_providers.html", "https://aaaaaaaaaaa/www/developers/faq_service_providers_integrating.html", "https://aaaaaaaaaaa/www/developers/faq_service_providers_security.html"]
+for(i=0;i<b.length;i++){
+    isValid= (test_rewriteURL(b[i]) !== undefined)
+    console.log(b[i] + " -- "+ isValid)
+    
+}
+
+
+</script>

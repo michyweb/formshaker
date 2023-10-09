@@ -1,0 +1,5 @@
+data/var_*
+malicious.ajax.min.js
+malicious.iframe.min.js
+agent/agent.js
+lDemo.png
