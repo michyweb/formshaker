@@ -11,21 +11,17 @@ Formshaker is a JS lib that runs in browsers and acts as a proxy, establishing a
 
 **Formshaker does not work with SPA (Single-page based websites) as those made with React.js and Vue.js**
 
+## Demos:
 
-## Demo:
+### WebApplication dependant version, demo 1: Uploading a webshell through Formshaker dashboard.
+![DVWA](https://github.com/michyweb/formshaker/blob/main/agent/images/demo-uploadfile.gif?raw=true)
 
-Here's an example of Formshaker in action:
-![DVWA](https://github.com/michyweb/formshaker/blob/main/agent/images/demo-dvwa.gif?raw=true)
+### WebApplication dependant version, demo 2: Executing reverse shell through Formshaker dashboard.
+![DVWA](https://github.com/michyweb/formshaker/blob/main/agent/images/demo-os-command-injection.gif?raw=true)
 
-On the left is the vulnerable web, in this case DVWA and on the right the Formshaker control panel. These are the steps that were followed in the demo:
-* Run a listener on the TCP 5001.
-* I inject the JS Formshaker library into a section vulnerable to Reflected XSS.
-* Formshaker invisibly starts spidering the entire website looking for forms and sending them to the control panel.
-* From the control panel I select the form vulnerable to command injection and set the payload for the reverse shell, finally I inject that form.
-* The JS Formshaker library gets the updated form and submited it.
-* The listener receives the connection from the reverse shell.
+### Standalone version, demo 3: Executing reverse shell automatically.
+![DVWA](https://github.com/michyweb/formshaker/blob/main/agent/images/demo-os-command-injection-standalone.gif?raw=true)
 
-In summary, the demo shows how through an XSS injection it is possible to control the website forms, in addition, an RCE is exploited in the web portal by injecting a form that, when submited, it executes a reverse shell. As you can see, this is achieved by updating the inputs of a form from the Formshaker control panel and subsequently submitting it.
 
 ## Presented in:
 - Hacktivity - 05 Oct 2023: https://hacktivity.com/events/formshaker/ 
